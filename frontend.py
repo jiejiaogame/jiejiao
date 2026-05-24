@@ -614,42 +614,282 @@ def get_html():
             transition: width 0.3s;
         }
         @media (max-width: 768px) {
+            /* ========== 顶部栏：垂直三行布局 ========== */
             .top-bar {
-                flex-wrap: wrap;
-                height: auto;
+                position: relative;
+                top: 0;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                gap: 8px;
+                border-radius: 0;
+                background: rgba(0,0,0,0.7);
+                backdrop-filter: blur(12px);
                 padding: 8px 12px;
+                margin-bottom: 10px;
+            }
+            .user-info {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+            }
+            .user-name {
+                font-size: 14px;
+            }
+            .user-resources {
+                gap: 12px;
+            }
+            .resource-item {
                 font-size: 12px;
+                padding: 2px 8px;
+            }
+            .music-control {
+                padding: 2px 8px;
+                gap: 4px;
+            }
+            .music-control input {
+                width: 60px;
+            }
+            .top-buttons {
+                width: 100%;
+                justify-content: space-around;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin: 0;
+            }
+            .top-buttons button {
+                font-size: 12px;
+                padding: 4px 10px;
+                background: #2c3e2f;
+                border-radius: 30px;
             }
             .user-info, .user-resources, .top-buttons {
-                margin: 4px 0;
+                margin: 0;
             }
+
+            /* ========== 主内容区域 ========== */
+            .main-content {
+                margin-top: 0;
+                padding: 8px;
+                overflow-y: auto;
+            }
+
+            /* 标签页按钮行 */
+            .tab-bar {
+                gap: 8px;
+                padding: 6px;
+                margin-bottom: 12px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .tab-btn {
+                font-size: 12px;
+                padding: 4px 12px;
+            }
+
+            /* 所有页面容器按比例缩小 */
+            .map-container,
+            .formation-area,
+            .gem-grid,
+            .city-layout {
+                transform: scale(0.9);
+                transform-origin: top center;
+                width: 100%;
+            }
+
+            /* 副本节点链 - 水平滚动 */
+            .node-chain {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                gap: 8px;
+                padding-bottom: 8px;
+            }
+            .node-card {
+                width: 110px;
+                padding: 8px;
+                flex-shrink: 0;
+            }
+            .node-name {
+                font-size: 12px;
+            }
+            .node-power, .node-reward {
+                font-size: 10px;
+            }
+            .connector {
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+
+            /* 演武场九宫格 */
             .formation-grid {
-                width: 95vw;
+                width: 100%;
                 gap: 8px;
                 padding: 12px;
+                transform: scale(0.9);
             }
             .formation-slot {
-                width: 28vw;
+                width: auto;
                 height: auto;
-                min-height: 100px;
+                min-height: 80px;
             }
             .formation-hero img {
                 width: 40px;
                 height: 40px;
             }
-            .gem-card {
-                width: 85px;
-                padding: 5px;
+            .formation-hero-name {
+                font-size: 9px;
             }
+
+            /* 宝石区域 */
+            .gem-card {
+                width: 75px;
+                padding: 4px;
+            }
+            .gem-card strong {
+                font-size: 10px;
+            }
+
+            /* 碧游宫三列布局 */
+            .city-layout {
+                flex-direction: column;
+                gap: 12px;
+                transform: none;
+            }
+            .city-column {
+                width: 100%;
+                padding: 10px;
+            }
+            .branch-card {
+                padding: 6px;
+                gap: 6px;
+            }
+            .branch-card button {
+                padding: 2px 8px;
+                font-size: 10px;
+            }
+
+            /* ========== 战斗画面适配 ========== */
+            .battle-panel {
+                overflow: auto;
+                justify-content: flex-start;
+            }
+            .battlefield {
+                padding: 0 8px 20px;
+                overflow-x: auto;
+                justify-content: flex-start;
+                gap: 15px;
+            }
+            .grid-container.left-grid-container,
+            .grid-container.right-grid-container {
+                width: 280px;
+                flex-shrink: 0;
+            }
+            .grid-slot {
+                width: 80px;
+                height: 100px;
+            }
+            .hero-avatar-mini {
+                max-width: 200%;
+                max-height: 200%;
+            }
+            .hero-name-mini {
+                bottom: 28px;
+                font-size: 9px;
+            }
+            .hero-hp-mini {
+                bottom: 5px;
+                font-size: 8px;
+            }
+            .grid-row-1 {
+                margin-bottom: -25px;
+            }
+            .grid-row-2 {
+                margin-bottom: -25px;
+            }
+            .health-bars {
+                padding: 15px 10px 5px;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .team-health .total-bar {
+                width: 90%;
+                margin: 3px auto;
+            }
+            .team-health {
+                font-size: 12px;
+            }
+            .power-value {
+                font-size: 10px;
+                padding: 1px 6px;
+            }
+            .skill-video-placeholder {
+                width: 280px;
+                height: 158px;
+            }
+            .skill-name-display {
+                font-size: 18px;
+                top: 120px;
+                padding: 4px 12px;
+                white-space: nowrap;
+            }
+            .controls {
+                gap: 12px;
+                padding: 8px;
+            }
+            .controls button {
+                padding: 4px 15px;
+                font-size: 14px;
+            }
+            .enemy-avatars {
+                top: 5px;
+                right: 5px;
+                padding: 3px 6px;
+            }
+            .enemy-avatar-item {
+                width: 35px;
+            }
+            .enemy-avatar-item img {
+                width: 28px;
+                height: 28px;
+            }
+            .enemy-hp {
+                font-size: 8px;
+            }
+
+            /* ========== 底部日志面板 ========== */
+            .log-panel {
+                width: calc(100% - 20px);
+                right: 10px;
+                bottom: 10px;
+                left: 10px;
+                margin: 0;
+            }
+            .log-header {
+                font-size: 12px;
+                padding: 4px;
+            }
+            .log-content {
+                height: 140px;
+                font-size: 10px;
+            }
+            .log-input input {
+                font-size: 12px;
+                padding: 4px;
+            }
+            .log-input button {
+                padding: 2px 10px;
+                font-size: 12px;
+            }
+
+            /* ========== 原有保留的适配 ========== */
             .friend-panel {
                 width: 90vw;
                 left: 5vw;
                 top: 60px;
-            }
-            .log-panel {
-                width: 90vw;
-                right: 5vw;
-                bottom: 10px;
             }
             .modal-content {
                 width: 95vw;
@@ -657,9 +897,6 @@ def get_html():
             }
             .hero-card {
                 width: 120px;
-            }
-            .city-layout {
-                flex-direction: column;
             }
             .pray-btn {
                 width: 80px;

@@ -1,0 +1,330 @@
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+import json
+import asyncio
+import random
+from core import (
+    rooms, users_ws, room_timers, DEFAULT_HERO, get_user, filter_msg,
+    start_hero_selection, fill_bots_and_start, select_hero, handle_defense,
+    end_turn, switch_turn, remove_player_from_room, check_game_over,
+    request_defense, draw_cards, cards, apply_seal_effects,
+    broadcast, broadcast_room_state, send_hand  # 这些函数将在下面定义
+)
+from frontend import get_html
+
+app = FastAPI(title="洪荒卡牌对战")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# ---------- 广播函数（依赖 app，放在 web.py 中）---------
+async def broadcast(room_id, msg_dict):
+    if room_id not in rooms:
+        return
+    room = rooms[room_id]
+    for u in room["uids"]:
+        if u in users_ws:
+            await users_ws[u].send_text(json.dumps(msg_dict))
+
+async def broadcast_room_state(room_id):
+    room = rooms[room_id]
+    players_info = []
+    for u in room["uids"]:
+        players_info.append({
+            "name": u,
+            "hp": room["hp"][u],
+            "hero": room["hero"][u],
+            "ready": room["ready"].get(u, False),
+            "equip": room["equip"][u],
+            "hand_count": len(room["hands"].get(u, []))
+        })
+    await broadcast(room_id, {
+        "type": "room_state",
+        "players": players_info,
+        "turn": room["turn"],
+        "deck_count": len(room["deck"]),
+        "started": room["started"],
+        "required": 2 if room["mode"] == "1v1" else 6,
+        "selecting": room.get("selecting_hero", False),
+        "hero_pool": room.get("available_heroes", []),
+        "selected_heroes": room.get("selected_heroes", {})
+    })
+
+async def send_hand(room_id, username):
+    room = rooms[room_id]
+    if username in room["hands"] and username in users_ws:
+        hand_info = [(card["name"], card["id"]) for card in room["hands"][username]]
+        await users_ws[username].send_text(json.dumps({
+            "type": "update_hand",
+            "cards": hand_info
+        }))
+
+# ---------- HTTP 路由 ----------
+@app.post("/register")
+async def register(req: Request):
+    data = await req.json()
+    username = data.get("username")
+    password = data.get("password")
+    email = data.get("email")
+    if not username or not password or not email:
+        return {"success": False, "msg": "所有字段都不能为空"}
+    from core import is_valid_email, create_user
+    if not is_valid_email(email):
+        return {"success": False, "msg": "邮箱格式不正确"}
+    if create_user(username, password, email):
+        return {"success": True, "msg": "注册成功"}
+    else:
+        return {"success": False, "msg": "用户名已存在"}
+
+@app.post("/login")
+async def login(req: Request):
+    data = await req.json()
+    username = data.get("username")
+    password = data.get("password")
+    user = get_user(username)
+    from core import hash_pwd
+    if user and user["password"] == hash_pwd(password):
+        return {"success": True, "msg": "登录成功"}
+    else:
+        return {"success": False, "msg": "用户名或密码错误"}
+
+@app.get("/backpack")
+async def backpack(username: str):
+    user = get_user(username)
+    if not user:
+        return {"error": "用户不存在"}
+    return {
+        "gold": user["gold"],
+        "heroes": user["heroes"],
+        "hero_shards": user["hero_shards"],
+        "skill_seals": user["skill_seals"],
+        "items": user["items"]
+    }
+
+@app.get("/my_heroes")
+async def my_heroes(username: str):
+    user = get_user(username)
+    if not user:
+        return {"error": "用户不存在"}
+    return {"heroes": user["heroes"]}
+
+@app.get("/hero_detail")
+async def hero_detail(name: str):
+    from heroes import get_hero
+    hero = get_hero(name)
+    if not hero:
+        return {"error": "武将不存在"}
+    return {
+        "name": name,
+        "camp": hero["camp"],
+        "hp": hero["hp"],
+        "star": hero["star"],
+        "skill": hero["skill"],
+        "skill_effect": hero["skill_effect"],
+        "seal_slots": hero["seal_slots"]
+    }
+
+# ---------- 前端页面 ----------
+@app.get("/")
+async def index():
+    return HTMLResponse(get_html())
+
+# ---------- WebSocket 核心 ----------
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    username = None
+    room_id = None
+    try:
+        while True:
+            data = await websocket.receive_text()
+            req = json.loads(data)
+            act = req.get("act")
+
+            if act == "login":
+                username = req.get("uid")
+                if username and get_user(username):
+                    users_ws[username] = websocket
+                    await websocket.send_text(json.dumps({"type": "login_ok"}))
+                else:
+                    await websocket.send_text(json.dumps({"type": "login_fail"}))
+                continue
+
+            if not username:
+                continue
+
+            if act == "create_room":
+                mode = req.get("mode", "1v1")
+                password = req.get("password", "")
+                room_id = str(random.randint(1000, 9999))
+                rooms[room_id] = {
+                    "mode": mode,
+                    "password": password,
+                    "uids": [username],
+                    "hp": {username: 4},
+                    "hero": {username: DEFAULT_HERO},
+                    "equip": {username: {"weapon": None, "armor": None, "mount_atk": None, "mount_def": None}},
+                    "seals": {username: []},
+                    "hands": {username: []},
+                    "deck": [],
+                    "discard_pile": [],
+                    "turn": 0,
+                    "ready": {username: False},
+                    "started": False,
+                    "selecting_hero": False,
+                    "available_heroes": [],
+                    "selected_heroes": {},
+                    "skip_turn": {},
+                    "winner": None
+                }
+                await websocket.send_text(json.dumps({"type": "room_created", "roomId": room_id}))
+                await broadcast_room_state(room_id)
+                continue
+
+            if act == "join_room":
+                target_room_id = req.get("roomId")
+                pwd = req.get("password", "")
+                if target_room_id not in rooms:
+                    await websocket.send_text(json.dumps({"type": "chat_msg", "text": "房间不存在"}))
+                    continue
+                room = rooms[target_room_id]
+                if room.get("password") and room["password"] != pwd:
+                    await websocket.send_text(json.dumps({"type": "chat_msg", "text": "房间密码错误"}))
+                    continue
+                if room.get("started") or room.get("selecting_hero"):
+                    await websocket.send_text(json.dumps({"type": "chat_msg", "text": "游戏已经开始或正在选将，无法加入"}))
+                    continue
+                if len(room["uids"]) >= (2 if room["mode"]=="1v1" else 6):
+                    await websocket.send_text(json.dumps({"type": "chat_msg", "text": "房间已满"}))
+                    continue
+                room_id = target_room_id
+                room["uids"].append(username)
+                room["hp"][username] = 4
+                room["hero"][username] = DEFAULT_HERO
+                room["equip"][username] = {"weapon": None, "armor": None, "mount_atk": None, "mount_def": None}
+                room["seals"][username] = []
+                room["hands"][username] = []
+                room["ready"][username] = False
+                await websocket.send_text(json.dumps({"type": "room_joined", "roomId": room_id}))
+                await broadcast_room_state(room_id)
+                required = 2 if room["mode"] == "1v1" else 6
+                current = len(room["uids"])
+                all_ready = all(room["ready"].get(u, False) for u in room["uids"])
+                if all_ready and current >= required:
+                    await start_hero_selection(room_id)
+                continue
+
+            if act == "ready" and room_id and room_id in rooms:
+                room = rooms[room_id]
+                room["ready"][username] = req.get("ready", False)
+                await broadcast_room_state(room_id)
+                required = 2 if room["mode"] == "1v1" else 6
+                current = len(room["uids"])
+                if room["ready"].get(username, False) and current < required:
+                    if room_id not in room_timers or room_timers[room_id].done():
+                        room_timers[room_id] = asyncio.create_task(fill_bots_and_start(room_id))
+                        await broadcast(room_id, {"type": "chat_msg", "text": f"人数不足，10秒后自动补齐人机并开始选将"})
+                all_ready = all(room["ready"].get(u, False) for u in room["uids"])
+                if all_ready and current >= required:
+                    if room_id in room_timers:
+                        room_timers[room_id].cancel()
+                    await start_hero_selection(room_id)
+                continue
+
+            if act == "select_hero" and room_id and room_id in rooms:
+                room = rooms[room_id]
+                if room.get("selecting_hero") and username not in room["selected_heroes"]:
+                    hero = req.get("hero")
+                    if hero in room["available_heroes"] and hero not in room["selected_heroes"].values():
+                        await select_hero(room_id, username, hero)
+                continue
+
+            if act == "defense" and room_id and room_id in rooms:
+                use = req.get("use", False)
+                await handle_defense(room_id, username, use)
+                continue
+
+            if act == "play" and room_id and room_id in rooms:
+                room = rooms[room_id]
+                if not room.get("started"):
+                    await websocket.send_text(json.dumps({"type": "chat_msg", "text": "游戏未开始"}))
+                    continue
+                if room["uids"][room["turn"]] != username:
+                    await websocket.send_text(json.dumps({"type": "chat_msg", "text": "不是你的回合"}))
+                    continue
+                if room.get("skip_turn", {}).get(username, False):
+                    room["skip_turn"][username] = False
+                    await websocket.send_text(json.dumps({"type": "chat_msg", "text": "你被渡劫标记，跳过本回合出牌"}))
+                    await end_turn(room_id)
+                    continue
+                card_name = req.get("card")
+                target = req.get("target")
+                hand = room["hands"][username]
+                idx = -1
+                for i, card in enumerate(hand):
+                    if card["name"] == card_name:
+                        idx = i
+                        break
+                if idx == -1:
+                    continue
+                card = hand.pop(idx)
+                if card_name == "攻击" and target and not target.startswith("人机_"):
+                    await request_defense(room_id, target, username, card)
+                    await send_hand(room_id, username)
+                    await broadcast_room_state(room_id)
+                    continue
+                effect_text = cards.apply_card_effect(room, card, username, target)
+                msg = f"{username} 使用了【{card_name}】{effect_text}"
+                await broadcast(room_id, {"type": "effect_play", "cardName": card_name, "text": msg})
+                await send_hand(room_id, username)
+                await broadcast_room_state(room_id)
+                await broadcast(room_id, {"type": "add_discard", "cardName": card_name})
+                await check_game_over(room_id)
+                continue
+
+            if act == "pass" and room_id and room_id in rooms:
+                room = rooms[room_id]
+                if not room.get("started"):
+                    continue
+                if room["uids"][room["turn"]] != username:
+                    continue
+                await end_turn(room_id)
+                continue
+
+            if act == "discard" and room_id:
+                room = rooms[room_id]
+                idx = req.get("idx")
+                if 0 <= idx < len(room["hands"][username]):
+                    card = room["hands"][username].pop(idx)
+                    room["discard_pile"].append(card)
+                    await send_hand(room_id, username)
+                continue
+            if act == "discard_done" and room_id:
+                await switch_turn(room_id)
+                continue
+            if act == "timeout_discard" and room_id:
+                room = rooms[room_id]
+                hand = room["hands"][username]
+                hp = room["hp"][username]
+                if len(hand) > hp:
+                    need = len(hand) - hp
+                    for _ in range(need):
+                        if hand:
+                            hand.pop(random.randint(0, len(hand)-1))
+                    await send_hand(room_id, username)
+                await switch_turn(room_id)
+                continue
+
+            if act == "chat" and room_id:
+                msg = filter_msg(req.get("msg", ""))
+                await broadcast(room_id, {"type": "chat_msg", "text": f"💬 {username}: {msg}"})
+
+            if act == "leave_room" and room_id:
+                await remove_player_from_room(room_id, username)
+                room_id = None
+                continue
+
+    except WebSocketDisconnect:
+        if username:
+            if room_id and room_id in rooms:
+                await remove_player_from_room(room_id, username)
+            users_ws.pop(username, None)

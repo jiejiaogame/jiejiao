@@ -1,0 +1,53 @@
+武将ID列表（来自 custom_heroes.json）
+ID	名称	头像文件	攻击文件	受击文件
+duobao	多宝道人	duobao.png	duobao_attack.png	duobao_hit.png
+jinling	金灵圣母	jinling.png	jinling_attack.png	jinling_hit.png
+wudang	无当圣母	wudang.png	wudang_attack.png	wudang_hit.png
+guiling	龟灵圣母	guiling.png	guiling_attack.png	guiling_hit.png
+yunxiao	云霄仙子	yunxiao.png	yunxiao_attack.png	yunxiao_hit.png
+qiongxiao	琼霄仙子	qiongxiao.png	qiongxiao_attack.png	qiongxiao_hit.png
+bixiao	碧霄仙子	bixiao.png	bixiao_attack.png	bixiao_hit.png
+zhaogongming	赵公明	zhaogongming.png	zhaogongming_attack.png	zhaogongming_hit.png
+daji	妲己	daji.png	daji_attack.png	daji_hit.png
+...	其他武将（enabled: false可选）	同上规则	同上规则	同上规则
+{
+  "万宝朝宗": "wanbaochao.mp4",
+  "龙虎如意": "longhu.mp4",
+  "混元拂尘": "hunyuanfuchen.mp4",
+  "玄甲护体": "xuanjia.mp4",
+  "混元金斗": "hunyuanjindou.mp4",
+  "金蛟剪": "jinjiaojian.mp4",
+  "缚龙索": "fulongsuo.mp4",
+  "定海珠": "dinghaizhu.mp4",
+  "遁龙桩": "dunlongzhuang.mp4",
+  "太极符印": "taijifuyin.mp4",
+  "杨枝甘露": "yangzhiganlu.mp4",
+  "五火七禽扇": "wuhuoqiqin.mp4",
+  "降魔杵": "xiangmochu.mp4",
+  "斩仙剑": "zhanxianjian.mp4",
+  "九龙神火罩": "jiulongshenhuo.mp4",
+  "照妖鉴": "zhaoyaojian.mp4",
+  "风雷双翼": "fengleishuangyi.mp4",
+  "八九玄功": "bajiuxuangong.mp4",
+  "乾坤圈": "qiankunquan.mp4",
+  "攒心钉": "zanxinding.mp4",
+  "金光阵": "jinguangzhen.mp4",
+  "开山斧": "kaishanfu.mp4",
+  "飞头术": "feitoushu.mp4",
+  "魅惑": "meihuo.mp4",
+  "雌雄双鞭": "cixiongshuangbian.mp4",
+  "金攥提炉枪": "jinzuan tiluqiang.mp4",
+  "铁嘴神鹰": "tiezuishishenying.mp4",
+  "混元锤": "hunyuanchui.mp4",
+  "六魂幡": "liuhunfan.mp4",
+  "牛黄": "niuhuang.mp4",
+  "戮魂幡": "luhunfan.mp4",
+  "五色石": "wuseshi.mp4",
+  "百胜刀": "baishengdao.mp4",
+  "仁德": "rende.mp4",
+  "打神鞭": "dashenbian.mp4",
+  "阴阳镜": "yinyangjing.mp4",
+  "五火神焰扇": "wuhuoshenyan.mp4",
+  "降魔宝杵": "xiangmobaochu.mp4",
+  "玲珑宝塔": "linglongbaota.mp4",
+  "吴钩剑": "wugoujian.mp4"

@@ -1,0 +1,12 @@
+武将ID列表（来自 custom_heroes.json）
+ID	名称	头像文件	攻击文件	受击文件
+duobao	多宝道人	duobao.png	duobao_attack.png	duobao_hit.png
+jinling	金灵圣母	jinling.png	jinling_attack.png	jinling_hit.png
+wudang	无当圣母	wudang.png	wudang_attack.png	wudang_hit.png
+guiling	龟灵圣母	guiling.png	guiling_attack.png	guiling_hit.png
+yunxiao	云霄仙子	yunxiao.png	yunxiao_attack.png	yunxiao_hit.png
+qiongxiao	琼霄仙子	qiongxiao.png	qiongxiao_attack.png	qiongxiao_hit.png
+bixiao	碧霄仙子	bixiao.png	bixiao_attack.png	bixiao_hit.png
+zhaogongming	赵公明	zhaogongming.png	zhaogongming_attack.png	zhaogongming_hit.png
+daji	妲己	daji.png	daji_attack.png	daji_hit.png
+...	其他武将（enabled: false可选）	同上规则	同上规则	同上规则

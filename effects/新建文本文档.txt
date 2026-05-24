@@ -1,0 +1,9 @@
+确保 staticimageseffects 目录下存在以下图片（用于状态图标）：
+
+stun.png
+
+poison.png
+
+shield.png
+
+strength_up.png

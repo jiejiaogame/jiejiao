@@ -1,4 +1,4 @@
-# frontend.py - 完整版（含图片预加载、缓存复用）
+# frontend.py - 完整版（手机/电脑双适配，移动端按钮隐藏）
 def get_html():
     return '''<!DOCTYPE html>
 <html lang="zh-CN">
@@ -613,7 +613,37 @@ def get_html():
             background: linear-gradient(90deg, #d99e3e, gold);
             transition: width 0.3s;
         }
+        
+        /* 电脑版隐藏移动端按钮 */
+        .log-controls {
+            display: none;
+        }
+        
+        /* ========== 手机版适配（宽度 ≤ 768px） ========== */
         @media (max-width: 768px) {
+            /* 电脑版隐藏的按钮在手机版显示 */
+            .log-controls {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                padding: 6px;
+                background: rgba(0,0,0,0.5);
+                border-top: 1px solid #555;
+            }
+            .log-controls button {
+                padding: 4px 20px;
+                font-size: 12px;
+                background: #d99e3e;
+                border: none;
+                border-radius: 30px;
+                font-weight: bold;
+                cursor: pointer;
+                color: #111;
+            }
+            .log-controls button:active {
+                transform: scale(0.98);
+            }
+            
             /* ========== 顶部栏：垂直三行布局 ========== */
             .top-bar {
                 position: relative;
@@ -789,23 +819,20 @@ def get_html():
                 font-size: 9px;
             }
 
-            /* ========== 战斗画面 - 对角布局（我方左上，敌方右下） ========== */
+            /* ========== 战斗画面 - 手机版专用 ========== */
             .battle-panel {
                 overflow-y: auto;
                 justify-content: flex-start;
-                padding: 5px 5px 60px 5px;
+                padding: 5px 5px 10px 5px;
                 -webkit-overflow-scrolling: touch;
             }
+            /* 血量条区域 - 紧贴九宫格上方 */
             .health-bars {
-                padding: 5px 8px;
+                padding: 0 8px 5px 8px;
                 flex-direction: row;
                 gap: 15px;
-                position: sticky;
-                top: 0;
-                background: rgba(0,0,0,0.7);
-                z-index: 10;
-                border-radius: 10px;
-                margin-bottom: 10px;
+                background: transparent;
+                margin-bottom: 5px;
                 justify-content: center;
             }
             .team-health {
@@ -813,6 +840,9 @@ def get_html():
                 flex: 1;
                 text-align: center;
                 max-width: 150px;
+                background: rgba(0,0,0,0.5);
+                border-radius: 10px;
+                padding: 3px 5px;
             }
             .team-health .total-bar {
                 width: 100%;
@@ -826,38 +856,43 @@ def get_html():
                 padding: 0;
                 flex-direction: column;
                 align-items: center;
-                gap: 30px;
+                gap: 15px;
                 overflow-x: visible;
-                min-height: 500px;
+                min-height: auto;
             }
+            /* 我方阵营 - 下移半人距离 */
             .grid-container.left-grid-container {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
                 margin-left: 0;
+                margin-top: 40px;
             }
             .left-grid-container .grid-title {
                 font-size: 12px;
                 text-align: left;
                 margin-left: 10px;
+                margin-bottom: 5px;
             }
-            /* 关键修改：我方九宫格下移半个身体（约30px） */
             .left-grid-container .grid-3x3 {
-                transform: scale(0.85) translateY(30px);
+                transform: scale(0.85);
                 transform-origin: top left;
             }
+            /* 敌方阵营 - 保持当前位置 */
             .grid-container.right-grid-container {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: flex-end;
                 margin-right: 0;
+                margin-bottom: 15px;
             }
             .right-grid-container .grid-title {
                 font-size: 12px;
                 text-align: right;
                 margin-right: 10px;
+                margin-bottom: 5px;
             }
             .right-grid-container .grid-3x3 {
                 transform: scale(0.85);
@@ -891,6 +926,7 @@ def get_html():
             .grid-row-2 {
                 margin-bottom: -12px;
             }
+            /* 技能动画 - 居中于两个九宫格之间 */
             .skill-video-placeholder {
                 width: 180px;
                 height: 101px;
@@ -902,26 +938,16 @@ def get_html():
             }
             .skill-name-display {
                 font-size: 12px;
-                top: 40%;
+                top: 45%;
                 left: 50%;
                 transform: translate(-50%, -50%);
                 white-space: nowrap;
                 z-index: 10015;
                 padding: 2px 8px;
             }
-            .controls {
-                position: sticky;
-                bottom: 0;
-                background: rgba(0,0,0,0.7);
-                padding: 6px;
-                gap: 20px;
-                margin-top: 15px;
-                display: flex;
-                justify-content: center;
-            }
-            .controls button {
-                padding: 4px 15px;
-                font-size: 12px;
+            /* 手机版：隐藏原战斗面板底部的控制按钮 */
+            .battle-panel .controls {
+                display: none;
             }
             .enemy-avatars {
                 top: 5px;
@@ -939,6 +965,37 @@ def get_html():
             }
             .enemy-hp {
                 font-size: 8px;
+            }
+
+            /* ========== 日志栏 - 手机版调整 ========== */
+            .log-panel {
+                width: calc(100% - 20px);
+                right: 10px;
+                bottom: 10px;
+                left: 10px;
+                margin: 0;
+                z-index: 10005;
+            }
+            .log-header {
+                font-size: 11px;
+                padding: 3px;
+            }
+            .log-content {
+                height: 120px;
+                font-size: 10px;
+            }
+            .log-input {
+                display: flex;
+                border-top: 1px solid #555;
+                padding: 5px;
+            }
+            .log-input input {
+                font-size: 11px;
+                padding: 4px;
+            }
+            .log-input button {
+                padding: 2px 8px;
+                font-size: 11px;
             }
 
             /* ========== 万仙殿模态框缩小 ========== */
@@ -998,30 +1055,6 @@ def get_html():
             }
             .empty-slot {
                 font-size: 10px;
-            }
-            .log-panel {
-                width: calc(100% - 20px);
-                right: 10px;
-                bottom: 10px;
-                left: 10px;
-                margin: 0;
-                z-index: 10005;
-            }
-            .log-header {
-                font-size: 11px;
-                padding: 3px;
-            }
-            .log-content {
-                height: 120px;
-                font-size: 10px;
-            }
-            .log-input input {
-                font-size: 11px;
-                padding: 4px;
-            }
-            .log-input button {
-                padding: 2px 8px;
-                font-size: 11px;
             }
         }
     </style>
@@ -1127,9 +1160,14 @@ def get_html():
         </div>
     </div>
 
+    <!-- 日志面板（电脑版和手机版共用，手机版会额外显示 .log-controls） -->
     <div class="log-panel" id="logPanel">
         <div class="log-header"><strong>📜 战报 & 聊天 (可拖动)</strong></div>
         <div class="log-content" id="logContent">等待战斗...</div>
+        <div class="log-controls">
+            <button id="skipFightBtnMobile" class="skip-btn">⏩ 跳过战斗</button>
+            <button id="escapeBtnMobile" class="escape-btn">🏃 逃跑</button>
+        </div>
         <div class="log-input"><input type="text" id="chatInput" placeholder="输入消息 (支持 @好友 私聊)"><button id="sendChatBtn">发送</button></div>
     </div>
 
@@ -1563,7 +1601,7 @@ async function showPowerRank() {
     let resp = await fetch(`/rank/power?username=${currentUser}`);
     let data = await resp.json();
     if (data.success) {
-        let rankHtml = '<table class="rank-table"><tr><th>排名</th><th>玩家</th><th>战力</th></tr>';
+        let rankHtml = '<table class="rank-table"><table><th>排名</th><th>玩家</th><th>战力</th></tr>';
         data.rank.forEach((item, idx) => {
             rankHtml += `<tr><td>${idx+1}</td><td>${item.username}</td><td>${item.power}</td></tr>`;
         });
@@ -1685,7 +1723,7 @@ async function loadUserAvatar() {
         document.getElementById('userAvatar').src = '/static/images/avatars/hero.png';
 }
 function connectWebSocket() {
-    ws = new WebSocket(`wss://${location.host}/ws`);
+    ws = new WebSocket(`ws://${location.host}/ws`);
     ws.onopen = () => ws.send(JSON.stringify({ act: "login", uid: currentUser }));
     ws.onmessage = (e) => {
         let data = JSON.parse(e.data);
@@ -2683,37 +2721,43 @@ function closeAvatarModal() { document.getElementById('avatarModal').style.displ
 
 function logout() { if (confirm("确定注销？")) { if (branchTimer) clearInterval(branchTimer); localStorage.removeItem('jijiao_user'); location.reload(); } }
 
-// ========== 战斗控制 ==========
+// ========== 战斗控制（同时绑定电脑版和移动端按钮） ==========
 function initBattleControls() {
     const skipBtn = document.getElementById('skipFightBtn');
     const escapeBtn = document.getElementById('escapeBtn');
-    if (skipBtn) {
-        skipBtn.onclick = () => {
-            if (window.currentAnimationPromise) {
-                window.skipRequested = true;
-                if (typeof addLog === 'function') addLog("⏩ 跳过战斗，直接结算...");
-            } else {
-                if (typeof addLog === 'function') addLog("当前没有进行中的战斗，无法跳过");
-            }
-        };
-    }
-    if (escapeBtn) {
-        escapeBtn.onclick = () => {
-            if (!window.currentAnimationPromise && !window.isFighting) {
-                if (typeof addLog === 'function') addLog("没有进行中的战斗");
-                return;
-            }
-            if (typeof addLog === 'function') addLog("🏃 你逃跑了，战斗结束");
+    const skipBtnMobile = document.getElementById('skipFightBtnMobile');
+    const escapeBtnMobile = document.getElementById('escapeBtnMobile');
+    
+    const skipHandler = () => {
+        if (window.currentAnimationPromise) {
             window.skipRequested = true;
-            window.isFighting = false;
-            if (typeof hideBattlePanel === 'function') hideBattlePanel();
-            playBgMusic();
-            if (typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ act: "escape" }));
-            }
-        };
-    }
+            if (typeof addLog === 'function') addLog("⏩ 跳过战斗，直接结算...");
+        } else {
+            if (typeof addLog === 'function') addLog("当前没有进行中的战斗，无法跳过");
+        }
+    };
+    
+    const escapeHandler = () => {
+        if (!window.currentAnimationPromise && !window.isFighting) {
+            if (typeof addLog === 'function') addLog("没有进行中的战斗");
+            return;
+        }
+        if (typeof addLog === 'function') addLog("🏃 你逃跑了，战斗结束");
+        window.skipRequested = true;
+        window.isFighting = false;
+        if (typeof hideBattlePanel === 'function') hideBattlePanel();
+        playBgMusic();
+        if (typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ act: "escape" }));
+        }
+    };
+    
+    if (skipBtn) skipBtn.onclick = skipHandler;
+    if (escapeBtn) escapeBtn.onclick = escapeHandler;
+    if (skipBtnMobile) skipBtnMobile.onclick = skipHandler;
+    if (escapeBtnMobile) escapeBtnMobile.onclick = escapeHandler;
 }
+
 async function loadPendingRequests() {
     let resp = await fetch(`/api/friend/pending?username=${currentUser}`);
     let data = await resp.json();

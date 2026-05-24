@@ -1,4 +1,4 @@
-# frontend.py - 最终修复版（血量实时刷新、状态图标显示、玩家头像正常）
+# frontend.py - 完整版（含图片预加载、缓存复用）
 def get_html():
     return '''<!DOCTYPE html>
 <html lang="zh-CN">
@@ -256,7 +256,6 @@ def get_html():
             background: #d99e3e;
             color: #1e2a2e;
         }
-        /* 针对招贤馆模态框单独设置背景图 */
         #recruitShopModal .modal-content {
             background: rgba(0, 0, 0, 0.7);
         }
@@ -464,7 +463,6 @@ def get_html():
             border-radius: 20px;
             display: inline-block;
         }
-        /* 碧游宫三列布局新样式 - 增强文字可读性 */
         .city-layout {
             display: flex;
             gap: 20px;
@@ -522,7 +520,6 @@ def get_html():
             opacity: 0.5;
             cursor: not-allowed;
         }
-        /* 宝石商店数量控制 */
         .shop-qty-control {
             display: flex;
             justify-content: center;
@@ -536,7 +533,6 @@ def get_html():
             border-radius: 50%;
             font-weight: bold;
         }
-        /* 祈愿面板样式 */
         .pray-panel-in-modal {
             margin-top: 20px;
             border-top: 1px solid #d99e3e;
@@ -601,6 +597,22 @@ def get_html():
             font-weight: bold;
             white-space: nowrap;
         }
+        #preloadProgressBar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(0,0,0,0.5);
+            z-index: 10004;
+            display: none;
+        }
+        #preloadProgressFill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #d99e3e, gold);
+            transition: width 0.3s;
+        }
         @media (max-width: 768px) {
             .top-bar {
                 flex-wrap: wrap;
@@ -659,6 +671,9 @@ def get_html():
 </head>
 <body>
 <div class="app" id="app" style="background-size: cover; background-position: center;">
+    <div id="preloadProgressBar">
+        <div id="preloadProgressFill"></div>
+    </div>
     <div class="top-bar">
         <div class="user-info">
             <img id="userAvatar" class="user-avatar" src="/static/images/avatars/hero.png" onerror="this.src='/static/images/avatars/hero.png'" onclick="showAvatarModal()">
@@ -840,6 +855,7 @@ def get_html():
     </div>
 </div>
 
+<script src="/static/js/battle.js"></script>
 <script>
 // ========== 全局变量 ==========
 let ws = null;
@@ -852,6 +868,138 @@ let branchTimer = null;
 let friendsList = [];
 let blacklist = [];
 let heroIdMap = {};
+
+// ========== 图片缓存池 ==========
+const imageCache = new Map();
+let preloadTotal = 0;
+let preloadLoaded = 0;
+let preloadInProgress = false;
+let preloadUrls = [];
+// ========== 图片预加载核心函数 ==========
+async function collectPreloadUrls() {
+    const urls = new Set();
+    
+    // 1. 所有武将立绘（从 my_heroes 获取）
+    if (currentUser) {
+        try {
+            const res = await fetch(`/my_heroes?username=${currentUser}`);
+            const data = await res.json();
+            if (data.heroes) {
+                for (const hero of data.heroes) {
+                    urls.add(`/static/images/heroes/${hero.id}.png`);
+                    urls.add(`/static/images/heroes/${hero.id}_attack.png`);
+                    urls.add(`/static/images/heroes/${hero.id}_hit.png`);
+                }
+            }
+        } catch(e) { console.warn('获取武将列表失败', e); }
+    }
+    
+    // 2. 所有背景图片
+    const bgList = [
+        '/static/images/bg/challenge_jinao.jpg',
+        '/static/images/bg/challenge_sanxian.jpg',
+        '/static/images/bg/lianxianzhen.jpg',
+        '/static/images/bg/bagualu.jpg',
+        '/static/images/bg/biyougong.jpg',
+        '/static/images/bg/wanxiandian.jpg',
+        '/static/images/bg/battle_bg.jpg'
+    ];
+    for (const bg of bgList) urls.add(bg);
+    
+    // 3. 宝石图片
+    const gemList = ['strength.png', 'intelligence.png', 'speed.png', 'hp.png', 'double.png'];
+    for (const gem of gemList) urls.add(`/static/images/gems/${gem}`);
+    
+    // 4. 通用头像和特效
+    urls.add('/static/images/avatars/hero.png');
+    urls.add('/static/images/heroes/hero.png');
+    
+    return Array.from(urls);
+}
+
+function preloadImage(url) {
+    return new Promise((resolve, reject) => {
+        if (imageCache.has(url)) {
+            resolve(imageCache.get(url));
+            return;
+        }
+        const img = new Image();
+        img.onload = () => {
+            imageCache.set(url, img);
+            resolve(img);
+        };
+        img.onerror = () => {
+            console.warn(`图片加载失败: ${url}`);
+            imageCache.set(url, null);
+            resolve(null);
+        };
+        img.src = url;
+    });
+}
+
+function showPreloadProgress(percent) {
+    const bar = document.getElementById('preloadProgressBar');
+    const fill = document.getElementById('preloadProgressFill');
+    if (bar && fill) {
+        bar.style.display = 'block';
+        fill.style.width = percent + '%';
+    }
+}
+
+function hidePreloadProgress() {
+    const bar = document.getElementById('preloadProgressBar');
+    if (bar) bar.style.display = 'none';
+}
+
+async function startPreload() {
+    if (preloadInProgress) return;
+    preloadInProgress = true;
+    
+    preloadUrls = await collectPreloadUrls();
+    preloadTotal = preloadUrls.length;
+    preloadLoaded = 0;
+    
+    console.log(`开始预加载 ${preloadTotal} 张图片...`);
+    showPreloadProgress(0);
+    
+    const batchSize = 10;
+    for (let i = 0; i < preloadUrls.length; i += batchSize) {
+        const batch = preloadUrls.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (url) => {
+            await preloadImage(url);
+            preloadLoaded++;
+            const percent = Math.floor((preloadLoaded / preloadTotal) * 100);
+            showPreloadProgress(percent);
+        }));
+        await new Promise(r => setTimeout(r, 50));
+    }
+    
+    console.log('图片预加载完成');
+    setTimeout(hidePreloadProgress, 1000);
+    preloadInProgress = false;
+}
+
+function getCachedImageUrl(url) {
+    if (imageCache.has(url) && imageCache.get(url)) {
+        return imageCache.get(url).src;
+    }
+    return url;
+}
+
+function setCachedBackground(bgUrl) {
+    const appDiv = document.getElementById('app');
+    if (imageCache.has(bgUrl) && imageCache.get(bgUrl)) {
+        appDiv.style.backgroundImage = `url(${imageCache.get(bgUrl).src})`;
+    } else {
+        appDiv.style.backgroundImage = `url(${bgUrl})`;
+        preloadImage(bgUrl).then(img => {
+            if (img) appDiv.style.backgroundImage = `url(${img.src})`;
+        });
+    }
+    appDiv.style.backgroundSize = 'cover';
+    appDiv.style.backgroundPosition = 'center';
+    appDiv.style.backgroundAttachment = 'fixed';
+}
 
 // ========== 音乐系统 ==========
 let bgMusic = null;
@@ -946,9 +1094,8 @@ function stopAllMusic() {
     currentMusic = null;
 }
 
-// ========== 背景切换 ==========
+// ========== 背景切换（使用缓存） ==========
 function setBackgroundByTab(tab) {
-    const appDiv = document.getElementById('app');
     let bgUrl = '';
     switch (tab) {
         case 'map':
@@ -970,12 +1117,20 @@ function setBackgroundByTab(tab) {
             bgUrl = '';
     }
     if (bgUrl) {
-        appDiv.style.backgroundImage = `url('${bgUrl}')`;
-        appDiv.style.backgroundSize = 'cover';
-        appDiv.style.backgroundPosition = 'center';
-        appDiv.style.backgroundAttachment = 'fixed';
-    } else {
-        appDiv.style.backgroundImage = 'none';
+        setCachedBackground(bgUrl);
+    }
+}
+
+function updateChallengeBackground() {
+    let selectedId = document.getElementById('challengeSelect')?.value;
+    let bgUrl = '';
+    if (selectedId === 'jinao') {
+        bgUrl = '/static/images/bg/challenge_jinao.jpg';
+    } else if (selectedId === 'sanxian') {
+        bgUrl = '/static/images/bg/challenge_sanxian.jpg';
+    }
+    if (bgUrl) {
+        setCachedBackground(bgUrl);
     }
 }
 
@@ -1067,48 +1222,6 @@ function closePowerRank() {
     document.getElementById('powerRankModal').style.display = 'none';
 }
 
-// ========== 实时更新血量显示（不重建网格） ==========
-function updateHeroHpBar(team, heroName, currentHp, maxHp) {
-    let gridId = team === 'left' ? 'leftGrid' : 'rightGrid';
-    let container = document.getElementById(gridId);
-    if (!container) return;
-    let heroDiv = null;
-    let rows = container.querySelectorAll('.grid-row');
-    for (let row of rows) {
-        let slots = row.querySelectorAll('.grid-slot');
-        for (let slot of slots) {
-            let card = slot.querySelector('.hero-card-mini');
-            if (card && card.querySelector('.hero-name-mini')?.innerText === heroName) {
-                heroDiv = card;
-                break;
-            }
-        }
-        if (heroDiv) break;
-    }
-    if (heroDiv) {
-        let hpSpan = heroDiv.querySelector('.hero-hp-mini');
-        let fillBar = heroDiv.querySelector('.hero-hp-fill');
-        if (hpSpan) hpSpan.innerText = `❤️ ${currentHp}/${maxHp}`;
-        if (fillBar) {
-            let percent = (currentHp / maxHp) * 100;
-            fillBar.style.width = percent + '%';
-        }
-        if (currentHp <= 0) {
-            heroDiv.classList.add('dead');
-            if (!heroDiv.querySelector('.dead-text')) {
-                let deadText = document.createElement('div');
-                deadText.className = 'dead-text';
-                deadText.innerText = '💀';
-                heroDiv.appendChild(deadText);
-            }
-        } else {
-            heroDiv.classList.remove('dead');
-            let deadText = heroDiv.querySelector('.dead-text');
-            if (deadText) deadText.remove();
-        }
-    }
-}
-
 // ========== 好友申请日志带按钮 ==========
 function addFriendRequestLog(fromUser, msg) {
     let logDiv = document.getElementById('logContent');
@@ -1180,7 +1293,6 @@ async function doAuth(mode, username, password, email = '') {
         loadChallengeList(); loadFormation(); loadCityInfo(); loadFriendList(); loadBlacklist(); checkSelfOccupied();
         await loadPendingRequests();
         initMusic();
-        // 加载用户音量设置
         let volResp = await fetch(`/user_info?username=${currentUser}`);
         let volData = await volResp.json();
         if (volData.success && volData.volume !== undefined) {
@@ -1194,6 +1306,8 @@ async function doAuth(mode, username, password, email = '') {
         }
         playBgMusic();
         startBlessingTimer();
+        // 开始预加载图片
+        startPreload().catch(console.warn);
     } else alert(data.msg);
 }
 document.getElementById('authSubmitBtn').onclick = () => {
@@ -1276,16 +1390,6 @@ function initTabs() {
             body: JSON.stringify({ username: currentUser, formation_type: newType })
         });
     };
-}
-
-function updateChallengeBackground() {
-    let selectedId = document.getElementById('challengeSelect')?.value;
-    const appDiv = document.getElementById('app');
-    if (selectedId === 'jinao') {
-        appDiv.style.backgroundImage = "url('/static/images/bg/challenge_jinao.jpg')";
-    } else if (selectedId === 'sanxian') {
-        appDiv.style.backgroundImage = "url('/static/images/bg/challenge_sanxian.jpg')";
-    }
 }
 
 // ========== 副本模块 ==========
@@ -1755,12 +1859,18 @@ async function loadDailyTasks() {
     }
     let tasks = data.tasks;
     const taskNames = {
-        login: '每日登录', self_pvp: '自我切磋', friend_pvp: '好友切磋',
-        challenge: '副本挑战', shop: '八卦炉商店购物'
+        login: '每日登录',
+        self_pvp: '自我切磋',
+        friend_pvp: '好友切磋',
+        challenge: '副本挑战',
+        shop: '八卦炉商店购物'
     };
     const taskReward = {
-        login: '100金币', self_pvp: '200金币', friend_pvp: '1钻石',
-        challenge: '5钻石', shop: '10钻石'
+        login: '100金币',
+        self_pvp: '200金币',
+        friend_pvp: '1钻石',
+        challenge: '5钻石',
+        shop: '10钻石'
     };
     let html = '';
     for (let [id, info] of Object.entries(tasks)) {
@@ -2257,10 +2367,6 @@ async function loadPendingRequests() {
     }
 }
 
-// 在 playBattleLogWithDelay 处理攻击和技能时调用 updateHeroHpBar
-// 需要将 updateHeroHpBar 注入到全局以便 battle.js 调用
-window.updateHeroHpBar = updateHeroHpBar;
-
 window.onload = async () => {
     await checkAuth();
     makeDraggable(document.getElementById('logPanel'));
@@ -2270,6 +2376,5 @@ window.onload = async () => {
     setInterval(() => { if (document.getElementById('friendPanel').style.display === 'block') loadFriendList(); }, 30000);
 };
 </script>
-<script src="/static/js/battle.js"></script>
 </body>
 </html>'''

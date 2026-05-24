@@ -1,0 +1,647 @@
+{
+  "heroes": [
+    {
+      "id": "duobao",
+      "name": "多宝道人",
+      "star5_hp": 48,
+      "star5_strength": 22,
+      "star5_intelligence": 28,
+      "star5_speed": 24,
+      "skill": {
+        "base_id": "single_magic_damage",
+        "display_name": "万宝朝宗"
+      },
+      "weight": 100,
+      "enabled": true
+    },
+    {
+      "id": "jinling",
+      "name": "金灵圣母",
+      "star5_hp": 50,
+      "star5_strength": 20,
+      "star5_intelligence": 32,
+      "star5_speed": 22,
+      "skill": {
+        "base_id": "single_magic_damage",
+        "display_name": "龙虎如意"
+      },
+      "weight": 100,
+      "enabled": true
+    },
+    {
+      "id": "wudang",
+      "name": "无当圣母",
+      "star5_hp": 45,
+      "star5_strength": 18,
+      "star5_intelligence": 30,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "single_magic_damage",
+        "display_name": "混元拂尘"
+      },
+      "weight": 90,
+      "enabled": true
+    },
+    {
+      "id": "guiling",
+      "name": "龟灵圣母",
+      "star5_hp": 55,
+      "star5_strength": 32,
+      "star5_intelligence": 14,
+      "star5_speed": 18,
+      "skill": {
+        "base_id": "shield",
+        "display_name": "玄甲护体",
+        "target_type": "ally_all"
+      },
+      "weight": 90,
+      "enabled": true
+    },
+    {
+      "id": "yunxiao",
+      "name": "云霄仙子",
+      "star5_hp": 42,
+      "star5_strength": 16,
+      "star5_intelligence": 34,
+      "star5_speed": 28,
+      "skill": {
+        "base_id": "all_enemy_magic",
+        "display_name": "混元金斗"
+      },
+      "weight": 95,
+      "enabled": true
+    },
+    {
+      "id": "qiongxiao",
+      "name": "琼霄仙子",
+      "star5_hp": 40,
+      "star5_strength": 15,
+      "star5_intelligence": 32,
+      "star5_speed": 30,
+      "skill": {
+        "base_id": "control",
+        "display_name": "金蛟剪",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.6 }]
+      },
+      "weight": 95,
+      "enabled": true
+    },
+    {
+      "id": "bixiao",
+      "name": "碧霄仙子",
+      "star5_hp": 38,
+      "star5_strength": 14,
+      "star5_intelligence": 35,
+      "star5_speed": 32,
+      "skill": {
+        "base_id": "control",
+        "display_name": "缚龙索",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.6 }]
+      },
+      "weight": 95,
+      "enabled": true
+    },
+    {
+      "id": "zhaogongming",
+      "name": "赵公明",
+      "star5_hp": 58,
+      "star5_strength": 18,
+      "star5_intelligence": 28,
+      "star5_speed": 20,
+      "skill": {
+        "base_id": "all_enemy_magic",
+        "display_name": "定海珠"
+      },
+      "weight": 100,
+      "enabled": true
+    },
+    {
+      "id": "wenshujun",
+      "name": "文殊广法天尊",
+      "star5_hp": 46,
+      "star5_strength": 20,
+      "star5_intelligence": 30,
+      "star5_speed": 25,
+      "skill": {
+        "base_id": "control",
+        "display_name": "遁龙桩",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "puxian",
+      "name": "普贤真人",
+      "star5_hp": 44,
+      "star5_strength": 22,
+      "star5_intelligence": 28,
+      "star5_speed": 24,
+      "skill": {
+        "base_id": "buff",
+        "display_name": "太极符印",
+        "target_type": "ally_all",
+        "effects": [{ "type": "strength_up", "duration": 2, "probability": 1.0 }]
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "cihang",
+      "name": "慈航道人",
+      "star5_hp": 42,
+      "star5_strength": 18,
+      "star5_intelligence": 32,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "heal",
+        "display_name": "杨枝甘露",
+        "target_type": "ally_all"
+      },
+      "weight": 90,
+      "enabled": true
+    },
+    {
+      "id": "qingxu",
+      "name": "清虚道德真君",
+      "star5_hp": 48,
+      "star5_strength": 20,
+      "star5_intelligence": 26,
+      "star5_speed": 22,
+      "skill": {
+        "base_id": "all_enemy_magic",
+        "display_name": "五火七禽扇"
+      },
+      "weight": 80,
+      "enabled": false
+    },
+    {
+      "id": "daoxing",
+      "name": "道行天尊",
+      "star5_hp": 50,
+      "star5_strength": 24,
+      "star5_intelligence": 22,
+      "star5_speed": 20,
+      "skill": {
+        "base_id": "physical_damage",
+        "display_name": "降魔杵"
+      },
+      "weight": 80,
+      "enabled": false
+    },
+    {
+      "id": "yuding",
+      "name": "玉鼎真人",
+      "star5_hp": 52,
+      "star5_strength": 30,
+      "star5_intelligence": 18,
+      "star5_speed": 22,
+      "skill": {
+        "base_id": "physical_single",
+        "display_name": "斩仙剑",
+        "crit_rate": 0.3,
+        "crit_round_start": 1
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "taiyi",
+      "name": "太乙真人",
+      "star5_hp": 46,
+      "star5_strength": 18,
+      "star5_intelligence": 34,
+      "star5_speed": 24,
+      "skill": {
+        "base_id": "all_enemy_magic",
+        "display_name": "九龙神火罩"
+      },
+      "weight": 90,
+      "enabled": false
+    },
+    {
+      "id": "yunzhongzi",
+      "name": "云中子",
+      "star5_hp": 44,
+      "star5_strength": 20,
+      "star5_intelligence": 30,
+      "star5_speed": 28,
+      "skill": {
+        "base_id": "control",
+        "display_name": "照妖鉴",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "leizhenzi",
+      "name": "雷震子",
+      "star5_hp": 54,
+      "star5_strength": 30,
+      "star5_intelligence": 16,
+      "star5_speed": 20,
+      "skill": {
+        "base_id": "all_enemy_physical",
+        "display_name": "风雷双翼"
+      },
+      "weight": 60,
+      "enabled": false
+    },
+    {
+      "id": "yangjian",
+      "name": "杨戬",
+      "star5_hp": 56,
+      "star5_strength": 34,
+      "star5_intelligence": 20,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "hybrid_damage",
+        "display_name": "八九玄功"
+      },
+      "weight": 60,
+      "enabled": false
+    },
+    {
+      "id": "nezha",
+      "name": "哪吒",
+      "star5_hp": 52,
+      "star5_strength": 32,
+      "star5_intelligence": 18,
+      "star5_speed": 28,
+      "skill": {
+        "base_id": "control",
+        "display_name": "乾坤圈",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.8 }]
+      },
+      "weight": 95,
+      "enabled": false
+    },
+    {
+      "id": "huangtianhua",
+      "name": "黄天化",
+      "star5_hp": 50,
+      "star5_strength": 30,
+      "star5_intelligence": 16,
+      "star5_speed": 24,
+      "skill": {
+        "base_id": "physical_single",
+        "display_name": "攒心钉"
+      },
+      "weight": 80,
+      "enabled": false
+    },
+    {
+      "id": "jinguang",
+      "name": "金光圣母",
+      "star5_hp": 42,
+      "star5_strength": 18,
+      "star5_intelligence": 32,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "all_enemy_magic",
+        "display_name": "金光阵"
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "juling",
+      "name": "巨灵神",
+      "star5_hp": 60,
+      "star5_strength": 36,
+      "star5_intelligence": 12,
+      "star5_speed": 16,
+      "skill": {
+        "base_id": "physical_damage",
+        "display_name": "开山斧"
+      },
+      "weight": 70,
+      "enabled": false
+    },
+    {
+      "id": "shenggong",
+      "name": "申公豹",
+      "star5_hp": 44,
+      "star5_strength": 20,
+      "star5_intelligence": 32,
+      "star5_speed": 28,
+      "skill": {
+        "base_id": "control",
+        "display_name": "飞头术",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 75,
+      "enabled": false
+    },
+    {
+      "id": "daji",
+      "name": "妲己",
+      "star5_hp": 38,
+      "star5_strength": 14,
+      "star5_intelligence": 36,
+      "star5_speed": 34,
+      "skill": {
+        "base_id": "control",
+        "display_name": "魅惑",
+        "target_type": "random_enemy",
+        "target_count": 3,
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 1.0
+          }
+        ]
+      },
+      "weight": 80,
+      "enabled": true
+    },
+    {
+      "id": "wenpeng",
+      "name": "闻仲",
+      "star5_hp": 58,
+      "star5_strength": 28,
+      "star5_intelligence": 28,
+      "star5_speed": 20,
+      "skill": {
+        "base_id": "control",
+        "display_name": "雌雄双鞭",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 90,
+      "enabled": false
+    },
+    {
+      "id": "huangfeihu",
+      "name": "黄飞虎",
+      "star5_hp": 56,
+      "star5_strength": 32,
+      "star5_intelligence": 16,
+      "star5_speed": 22,
+      "skill": {
+        "base_id": "physical_damage",
+        "display_name": "金攥提炉枪"
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "chongheihu",
+      "name": "崇黑虎",
+      "star5_hp": 54,
+      "star5_strength": 30,
+      "star5_intelligence": 18,
+      "star5_speed": 20,
+      "skill": {
+        "base_id": "dot_poison",
+        "display_name": "铁嘴神鹰",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "poison", "duration": 3, "probability": 1.0 }]
+      },
+      "weight": 75,
+      "enabled": false
+    },
+    {
+      "id": "wuyunxian",
+      "name": "乌云仙",
+      "star5_hp": 52,
+      "star5_strength": 24,
+      "star5_intelligence": 26,
+      "star5_speed": 22,
+      "skill": {
+        "base_id": "control",
+        "display_name": "混元锤",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "changxian",
+      "name": "长耳定光仙",
+      "star5_hp": 46,
+      "star5_strength": 20,
+      "star5_intelligence": 28,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "debuff",
+        "display_name": "六魂幡",
+        "target_type": "all_enemy",
+        "effects": [{ "type": "strength_down", "duration": 2, "probability": 0.8 }]
+      },
+      "weight": 80,
+      "enabled": false
+    },
+    {
+      "id": "jintai",
+      "name": "金大升",
+      "star5_hp": 58,
+      "star5_strength": 34,
+      "star5_intelligence": 14,
+      "star5_speed": 18,
+      "skill": {
+        "base_id": "dot_poison",
+        "display_name": "牛黄",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "poison", "duration": 3, "probability": 1.0 }]
+      },
+      "weight": 75,
+      "enabled": false
+    },
+    {
+      "id": "yuwenhua",
+      "name": "余化",
+      "star5_hp": 50,
+      "star5_strength": 28,
+      "star5_intelligence": 20,
+      "star5_speed": 24,
+      "skill": {
+        "base_id": "control",
+        "display_name": "戮魂幡",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.6 }]
+      },
+      "weight": 70,
+      "enabled": false
+    },
+    {
+      "id": "hanzhixian",
+      "name": "韩智仙",
+      "star5_hp": 44,
+      "star5_strength": 18,
+      "star5_intelligence": 32,
+      "star5_speed": 28,
+      "skill": {
+        "base_id": "control",
+        "display_name": "五色石",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 70,
+      "enabled": false
+    },
+    {
+      "id": "suihu",
+      "name": "苏护",
+      "star5_hp": 52,
+      "star5_strength": 28,
+      "star5_intelligence": 18,
+      "star5_speed": 22,
+      "skill": {
+        "base_id": "physical_damage",
+        "display_name": "百胜刀"
+      },
+      "weight": 70,
+      "enabled": false
+    },
+    {
+      "id": "jifayou",
+      "name": "姬发",
+      "star5_hp": 48,
+      "star5_strength": 22,
+      "star5_intelligence": 26,
+      "star5_speed": 24,
+      "skill": {
+        "base_id": "buff",
+        "display_name": "仁德",
+        "target_type": "ally_all",
+        "effects": [{ "type": "strength_up", "duration": 2, "probability": 1.0 }]
+      },
+      "weight": 66,
+      "enabled": true
+    },
+    {
+      "id": "jiangziya",
+      "name": "姜子牙",
+      "star5_hp": 46,
+      "star5_strength": 20,
+      "star5_intelligence": 34,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "control",
+        "display_name": "打神鞭",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.8 }]
+      },
+      "weight": 50,
+      "enabled": false
+    },
+    {
+      "id": "shenyuan",
+      "name": "申元",
+      "star5_hp": 42,
+      "star5_strength": 16,
+      "star5_intelligence": 30,
+      "star5_speed": 30,
+      "skill": {
+        "base_id": "control",
+        "display_name": "阴阳镜",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 75,
+      "enabled": false
+    },
+    {
+      "id": "yangren",
+      "name": "杨任",
+      "star5_hp": 44,
+      "star5_strength": 20,
+      "star5_intelligence": 28,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "all_enemy_magic",
+        "display_name": "五火神焰扇"
+      },
+      "weight": 80,
+      "enabled": false
+    },
+    {
+      "id": "weihu",
+      "name": "韦护",
+      "star5_hp": 56,
+      "star5_strength": 32,
+      "star5_intelligence": 16,
+      "star5_speed": 20,
+      "skill": {
+        "base_id": "shield",
+        "display_name": "降魔宝杵",
+        "target_type": "ally_all"
+      },
+      "weight": 85,
+      "enabled": false
+    },
+    {
+      "id": "lidong",
+      "name": "李靖",
+      "star5_hp": 54,
+      "star5_strength": 28,
+      "star5_intelligence": 22,
+      "star5_speed": 22,
+      "skill": {
+        "base_id": "shield",
+        "display_name": "玲珑宝塔",
+        "target_type": "ally_all"
+      },
+      "weight": 80,
+      "enabled": false
+    },
+    {
+      "id": "jinna",
+      "name": "金吒",
+      "star5_hp": 48,
+      "star5_strength": 26,
+      "star5_intelligence": 24,
+      "star5_speed": 26,
+      "skill": {
+        "base_id": "control",
+        "display_name": "遁龙桩",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+      },
+      "weight": 80,
+      "enabled": false
+    },
+    {
+      "id": "muzha",
+      "name": "木吒",
+      "star5_hp": 46,
+      "star5_strength": 24,
+      "star5_intelligence": 26,
+      "star5_speed": 28,
+      "skill": {
+        "base_id": "dot_poison",
+        "display_name": "吴钩剑",
+        "target_type": "single_enemy",
+        "target_count": 1,
+        "effects": [{ "type": "poison", "duration": 3, "probability": 1.0 }]
+      },
+      "weight": 80,
+      "enabled": false
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "skills": [
+    {
+      "id": "single_magic_damage",
+      "name": "单体法术伤害",
+      "display_name": "法术攻击",
+      "type": "magic",
+      "target_type": "single_enemy",
+      "damage_formula": "intelligence * 1.5",
+      "effects": [],
+      "description": "对单个敌人造成法术伤害，伤害与智力相关"
+    },
+    {
+      "id": "physical_damage",
+      "name": "单体物理伤害",
+      "display_name": "物理攻击",
+      "type": "physical",
+      "target_type": "single_enemy",
+      "damage_formula": "strength * 1.5",
+      "effects": [],
+      "description": "对单个敌人造成物理伤害，伤害与力量相关"
+    },
+    {
+      "id": "physical_single",
+      "name": "单体物理伤害（暴击）",
+      "display_name": "物理攻击",
+      "type": "physical",
+      "target_type": "single_enemy",
+      "damage_formula": "strength * 1.5",
+      "crit_rate": 0.3,
+      "crit_round_start": 2,
+      "effects": [],
+      "description": "对单个敌人造成物理伤害，从第2回合起有30%概率暴击"
+    },
+    {
+      "id": "hybrid_damage",
+      "name": "混合伤害",
+      "display_name": "混元攻击",
+      "type": "hybrid",
+      "target_type": "single_enemy",
+      "damage_formula": "(strength + intelligence) * 1.2",
+      "effects": [],
+      "description": "混合力量与智力的攻击"
+    },
+    {
+      "id": "heal",
+      "name": "单体治疗",
+      "display_name": "治疗术",
+      "type": "heal",
+      "target_type": "ally_lowest_hp",
+      "heal_formula": "intelligence * 1.5",
+      "effects": [],
+      "description": "治疗生命最低的队友"
+    },
+    {
+      "id": "buff",
+      "name": "增益",
+      "display_name": "强化",
+      "type": "buff",
+      "target_type": "self",
+      "effects": [
+        {
+          "type": "strength_up",
+          "duration": 2,
+          "probability": 1.0,
+          "value": 1.2
+        }
+      ],
+      "description": "提升自身攻击力2回合"
+    },
+    {
+      "id": "control",
+      "name": "控制技能",
+      "display_name": "眩晕",
+      "type": "control",
+      "target_type": "single_enemy",
+      "damage_formula": "intelligence * 1.0",
+      "effects": [
+        {
+          "type": "stun",
+          "duration": 1,
+          "probability": 0.5
+        }
+      ],
+      "description": "造成伤害并有50%概率使目标眩晕1回合"
+    },
+    {
+      "id": "all_enemy_magic",
+      "name": "群体法术伤害",
+      "display_name": "群体法术",
+      "type": "magic",
+      "target_type": "all_enemy",
+      "damage_formula": "intelligence * 1.0",
+      "effects": [],
+      "description": "对全体敌人造成法术伤害"
+    },
+    {
+      "id": "all_enemy_physical",
+      "name": "群体物理伤害",
+      "display_name": "群体物理",
+      "type": "physical",
+      "target_type": "all_enemy",
+      "damage_formula": "strength * 1.0",
+      "effects": [],
+      "description": "对全体敌人造成物理伤害"
+    },
+    {
+      "id": "single_magic_damage_high",
+      "name": "高级法术伤害",
+      "display_name": "高级法术",
+      "type": "magic",
+      "target_type": "single_enemy",
+      "damage_formula": "intelligence * 2.0",
+      "effects": [],
+      "description": "对单个敌人造成大量法术伤害"
+    },
+    {
+      "id": "single_physical_damage_high",
+      "name": "高级物理伤害",
+      "display_name": "高级物理",
+      "type": "physical",
+      "target_type": "single_enemy",
+      "damage_formula": "strength * 2.0",
+      "effects": [],
+      "description": "对单个敌人造成大量物理伤害"
+    },
+    {
+      "id": "shield",
+      "name": "护盾",
+      "display_name": "护盾",
+      "type": "shield",
+      "target_type": "self",
+      "shield_formula": "intelligence * 1.5",
+      "effects": [],
+      "description": "为自己附加一个护盾，吸收伤害"
+    },
+    {
+      "id": "dot_poison",
+      "name": "毒雾",
+      "display_name": "毒雾",
+      "type": "debuff",
+      "target_type": "single_enemy",
+      "damage_formula": "intelligence * 0.5",
+      "effects": [
+        {
+          "type": "poison",
+          "duration": 3,
+          "probability": 1.0,
+          "damage_per_turn": 10
+        }
+      ],
+      "description": "使目标中毒，每回合受到伤害"
+    }
+  ]
+}

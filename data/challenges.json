@@ -1,0 +1,32 @@
+{
+  "challenges": [
+    {
+      "id": "jinao",
+      "name": "金鳌岛",
+      "min_level": 5,
+      "nodes": [
+        {"node_id": 1, "main_hero_ids": ["duobao"], "power": 500, "exp": 100, "gold": 200, "drop_rate": 0.3},
+        {"node_id": 2, "main_hero_ids": ["jinling"], "power": 800, "exp": 120, "gold": 250, "drop_rate": 0.3},
+        {"node_id": 3, "main_hero_ids": ["wudang"], "power": 1100, "exp": 140, "gold": 300, "drop_rate": 0.3},
+        {"node_id": 4, "main_hero_ids": ["guiling"], "power": 1400, "exp": 160, "gold": 350, "drop_rate": 0.3},
+        {"node_id": 5, "main_hero_ids": ["yunxiao"], "power": 1700, "exp": 180, "gold": 400, "drop_rate": 0.3},
+        {"node_id": 6, "main_hero_ids": ["zhaogongming"], "power": 2000, "exp": 200, "gold": 450, "drop_rate": 0.3},
+        {"node_id": 7, "main_hero_ids": ["duobao", "jinling"], "power": 2500, "exp": 300, "gold": 600, "drop_rate": 0.4}
+      ]
+    },
+    {
+      "id": "sanxian",
+      "name": "三仙岛",
+      "min_level": 20,
+      "nodes": [
+        {"node_id": 1, "main_hero_ids": ["yunxiao"], "power": 1200, "exp": 150, "gold": 300, "drop_rate": 0.35},
+        {"node_id": 2, "main_hero_ids": ["qiongxiao"], "power": 1600, "exp": 180, "gold": 350, "drop_rate": 0.35},
+        {"node_id": 3, "main_hero_ids": ["bixiao"], "power": 2000, "exp": 210, "gold": 400, "drop_rate": 0.35},
+        {"node_id": 4, "main_hero_ids": ["yunxiao", "qiongxiao"], "power": 2400, "exp": 240, "gold": 480, "drop_rate": 0.35},
+        {"node_id": 5, "main_hero_ids": ["qiongxiao", "bixiao"], "power": 2800, "exp": 270, "gold": 560, "drop_rate": 0.35},
+        {"node_id": 6, "main_hero_ids": ["yunxiao", "bixiao"], "power": 3200, "exp": 300, "gold": 640, "drop_rate": 0.35},
+        {"node_id": 7, "main_hero_ids": ["yunxiao", "qiongxiao", "bixiao"], "power": 4000, "exp": 400, "gold": 800, "drop_rate": 0.45}
+      ]
+    }
+  ]
+}

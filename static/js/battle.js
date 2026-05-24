@@ -1,4 +1,4 @@
-// static/js/battle.js - 治疗技能也播放音效并显示绿色加号
+// static/js/battle.js - 添加音效预加载功能
 let leftTeam = [], rightTeam = [];
 let originalLeftTeam = [], originalRightTeam = [];
 window.isFighting = false;
@@ -6,6 +6,182 @@ window.skipRequested = false;
 window.currentAnimationPromise = null;
 let battleCallback = null;
 let battleWinner = null;
+
+// ========== 音效预加载缓存 ==========
+let audioContext = null;
+const soundCache = new Map();  // 存储已解码的 AudioBuffer
+let preloadProgress = { loaded: 0, total: 0 };
+let preloadComplete = false;
+let preloadPromise = null;
+
+// 获取或创建 AudioContext（用户交互后解锁）
+function getAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
+}
+
+// 预加载音效：传入 URL 数组，返回 Promise
+async function preloadSounds(urls, onProgress) {
+    const ctx = getAudioContext();
+    // 如果 AudioContext 是挂起状态，等待用户交互后再继续（但我们可以先 fetch 数组，不解码）
+    // 为了兼容自动播放策略，先 fetch 数据，暂不解码，等播放时再解码或提前解码但需要用户交互
+    // 最佳做法：在用户首次点击页面任意位置时，初始化 AudioContext 并开始预加载解码
+    const toLoad = urls.filter(url => !soundCache.has(url));
+    preloadProgress.total = toLoad.length;
+    preloadProgress.loaded = 0;
+    
+    const fetchPromises = toLoad.map(async (url) => {
+        try {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            // 暂存 arrayBuffer，等 AudioContext 激活后再解码
+            soundCache.set(url, { arrayBuffer, decoded: false, buffer: null });
+            preloadProgress.loaded++;
+            if (onProgress) onProgress(preloadProgress.loaded, preloadProgress.total);
+        } catch (e) {
+            console.warn(`预加载音效失败: ${url}`, e);
+        }
+    });
+    await Promise.all(fetchPromises);
+}
+
+// 解码所有已预加载的音效（需要在用户交互后调用）
+async function decodeAllSounds() {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') {
+        await ctx.resume();
+    }
+    const entries = Array.from(soundCache.entries());
+    for (const [url, item] of entries) {
+        if (!item.decoded && item.arrayBuffer) {
+            try {
+                const buffer = await ctx.decodeAudioData(item.arrayBuffer.slice(0));
+                item.buffer = buffer;
+                item.decoded = true;
+                delete item.arrayBuffer; // 释放内存
+            } catch (e) {
+                console.warn(`解码音效失败: ${url}`, e);
+            }
+        }
+    }
+}
+
+// 播放音效（从缓存中取）
+function playSound(url, volume = 0.5) {
+    if (!url) return;
+    const ctx = getAudioContext();
+    const cached = soundCache.get(url);
+    
+    // 如果已解码，直接播放
+    if (cached && cached.decoded && cached.buffer) {
+        const source = ctx.createBufferSource();
+        source.buffer = cached.buffer;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = volume;
+        source.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        source.start();
+        return;
+    }
+    
+    // 降级方案：实时下载并播放
+    if (ctx.state === 'suspended') {
+        ctx.resume().catch(e => console.warn);
+    }
+    fetch(url)
+        .then(res => res.arrayBuffer())
+        .then(buffer => ctx.decodeAudioData(buffer))
+        .then(decoded => {
+            // 缓存起来供下次使用
+            soundCache.set(url, { decoded: true, buffer: decoded });
+            const source = ctx.createBufferSource();
+            source.buffer = decoded;
+            const gainNode = ctx.createGain();
+            gainNode.gain.value = volume;
+            source.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            source.start();
+        })
+        .catch(e => console.warn("音效加载失败:", url, e));
+}
+
+// 获取所有需要预加载的音效 URL（武将音效 + 通用音效）
+async function getAllSoundUrls() {
+    // 获取所有武将 ID 列表
+    const heroIds = new Set();
+    const allHeroes = await fetch(`/my_heroes?username=${currentUser}`).then(r => r.json()).catch(() => ({ heroes: [] }));
+    if (allHeroes.heroes) {
+        allHeroes.heroes.forEach(h => heroIds.add(h.id));
+    }
+    // 添加常用武将（即使未拥有也可能出现在战斗中）
+    const commonIds = ['duobao', 'jinling', 'yunxiao', 'zhaogongming', 'daji', 'jiangziya'];
+    commonIds.forEach(id => heroIds.add(id));
+    
+    const urls = [];
+    for (const id of heroIds) {
+        urls.push(`/static/sounds/heroes/${id}_attack.wav`);
+        urls.push(`/static/sounds/heroes/${id}_hit.wav`);
+    }
+    // 通用音效
+    const commonSounds = [
+        '/static/sounds/attack_physical.wav',
+        '/static/sounds/attack_magic.wav',
+        '/static/sounds/heal.wav',
+        '/static/sounds/crit.wav',
+        '/static/sounds/victory.wav',
+        '/static/sounds/defeat.wav'
+    ];
+    urls.push(...commonSounds);
+    return [...new Set(urls)]; // 去重
+}
+
+// 开始预加载（在用户登录后调用）
+async function startPreload(onProgress) {
+    if (preloadPromise) return preloadPromise;
+    const urls = await getAllSoundUrls();
+    preloadPromise = preloadSounds(urls, onProgress);
+    await preloadPromise;
+    // 注意：不解码，等用户首次交互时再解码（避免自动播放策略）
+    preloadComplete = true;
+    return preloadPromise;
+}
+
+// 用户首次交互时调用（点击页面任意位置），解码所有音效
+async function unlockAndDecodeSounds() {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') {
+        await ctx.resume();
+    }
+    await decodeAllSounds();
+    console.log('音效解码完成，已就绪');
+}
+
+// 检查战斗所需音效是否已解码（可选，可跳过直接播放）
+async function ensureBattleSoundsReady(attackerId, targetId) {
+    const neededUrls = [
+        `/static/sounds/heroes/${attackerId}_attack.wav`,
+        `/static/sounds/heroes/${targetId}_hit.wav`
+    ];
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') {
+        await ctx.resume();
+    }
+    for (const url of neededUrls) {
+        const cached = soundCache.get(url);
+        if (cached && !cached.decoded && cached.arrayBuffer) {
+            try {
+                const buffer = await ctx.decodeAudioData(cached.arrayBuffer.slice(0));
+                cached.buffer = buffer;
+                cached.decoded = true;
+                delete cached.arrayBuffer;
+            } catch (e) {
+                console.warn(`解码失败: ${url}`, e);
+            }
+        }
+    }
+}
 
 // ========== 技能视频映射表 ==========
 let skillVideoMap = {};
@@ -61,28 +237,6 @@ async function loadSkillAnimations() {
             "吴钩剑": "wugoujian.mp4"
         };
     }
-}
-
-// ========== 音效系统 ==========
-let audioContext = null;
-function playSound(url, volume = 0.5) {
-    if (!url) return;
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    fetch(url)
-        .then(res => res.arrayBuffer())
-        .then(buffer => audioContext.decodeAudioData(buffer))
-        .then(decoded => {
-            const source = audioContext.createBufferSource();
-            source.buffer = decoded;
-            const gainNode = audioContext.createGain();
-            gainNode.gain.value = volume;
-            source.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            source.start();
-        })
-        .catch(e => console.warn("音效加载失败:", url, e));
 }
 
 function getHeroId(heroName, heroObj) {
@@ -281,11 +435,14 @@ function highlightHero(heroAvatar, duration = 500) {
     setTimeout(() => heroAvatar.classList.remove('glow-effect'), duration);
 }
 
-// ========== 单体攻击动画（隐藏父容器，飞行终点偏移） ==========
+// ========== 单体攻击动画 ==========
 async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, damage, skillType, isHeal, targetId, skillName) {
     if (window.skipRequested) return;
     if (skillName) showSkillName(skillName, 2000);
     if (!attackerAvatar || !targetAvatar) return;
+
+    // 确保战斗所需音效已解码
+    await ensureBattleSoundsReady(attackerId, targetId);
 
     let videoPlace = null;
     let videoFile = skillVideoMap[skillName];
@@ -396,6 +553,10 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
     if (window.skipRequested) return;
     if (skillName) showSkillName(skillName, 2000);
     if (!attackerAvatar) return;
+    
+    // 确保攻击音效已解码
+    await ensureBattleSoundsReady(attackerId, targetsInfo[0]?.id || '');
+    
     const originalSrc = attackerAvatar.src;
     const rect = attackerAvatar.getBoundingClientRect();
 
@@ -456,6 +617,7 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
     for (let i = 0; i < targetsInfo.length; i++) {
         if (window.skipRequested) break;
         const t = targetsInfo[i];
+        await ensureBattleSoundsReady(attackerId, t.id);
         t.avatar.classList.add('hit-shake');
         showDamageNumber(t.avatar, t.damage);
         applySkillEffect(skillType, t.avatar, attackerAvatar, skillName);
@@ -481,7 +643,7 @@ function updateEnemyPlayerAvatar(avatarUrl, playerName) {
     container.appendChild(div);
 }
 
-// ========== 血量与UI（包含实时更新单元格） ==========
+// ========== 血量与UI ==========
 function applyFinalHp(log, winner) {
     leftTeam = JSON.parse(JSON.stringify(originalLeftTeam));
     rightTeam = JSON.parse(JSON.stringify(originalRightTeam));
@@ -627,14 +789,11 @@ async function playBattleLogWithDelay(log, winner) {
                         const isNonDamage = (skillType === 'buff' || skillType === 'heal' || skillType === 'shield');
                         if (isNonDamage) {
                             showSkillName(skillName, 2000);
-                            // 群体治疗/增益/护盾：播放攻击者和所有目标的音效，并显示加号（治疗）
                             if (skillType === 'heal') {
-                                // 播放攻击者的 attack 音效
                                 playSound(`/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
                                 for (let t of entry.targets) {
                                     let targetId = getHeroId(t.name, {});
                                     playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
-                                    // 显示绿色加号
                                     let avatar = getHeroAvatarDiv(t.team, t.name);
                                     if (avatar) showDamageNumber(avatar, t.damage, true);
                                 }
@@ -691,7 +850,6 @@ async function playBattleLogWithDelay(log, winner) {
 
                         if (isBuff || isHeal || isShield) {
                             showSkillName(skillName, 2000);
-                            // 治疗：播放攻击者和目标的音效，显示加号
                             if (isHeal) {
                                 let attackerId = getHeroId(attackerName, {});
                                 let targetId = getHeroId(targetName, {});
@@ -707,7 +865,6 @@ async function playBattleLogWithDelay(log, winner) {
                                 }, 100);
                             }
                             await new Promise(r => setTimeout(r, 1000));
-                            // 治疗/护盾后更新血量
                             let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
                             let hero = targetTeam.find(h => h.name === targetName);
                             if (hero && (isHeal || isShield)) {
@@ -806,7 +963,6 @@ function hideBattlePanel() {
     window.skipRequested = false;
 }
 
-// ========== 网格渲染 ==========
 function renderGrids() {
     renderOneGrid('leftGrid', leftTeam);
     renderOneGrid('rightGrid', rightTeam);
@@ -904,15 +1060,31 @@ function initBattleControls() {
     }
 }
 
+// 暴露全局方法
 window.showBattlePanel = showBattlePanel;
 window.hideBattlePanel = hideBattlePanel;
 window.applyFinalHp = applyFinalHp;
 window.updateHeroHpBar = updateHeroHpBar;
+window.startPreload = startPreload;
+window.unlockAndDecodeSounds = unlockAndDecodeSounds;
 
+// 页面加载后预加载音效（但不解码，等待用户交互）
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         loadSkillAnimations().then(() => initBattleControls());
+        // 预加载音效文件（只下载不解码）
+        if (window.currentUser) {
+            startPreload().catch(console.warn);
+        }
     });
 } else {
     loadSkillAnimations().then(() => initBattleControls());
+    if (window.currentUser) {
+        startPreload().catch(console.warn);
+    }
 }
+
+// 监听全局点击事件，用户首次交互时解码音效（自动播放策略需要）
+document.body.addEventListener('click', () => {
+    unlockAndDecodeSounds();
+}, { once: true });

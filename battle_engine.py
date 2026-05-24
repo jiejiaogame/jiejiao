@@ -1,4 +1,4 @@
-# battle_engine.py - 最终版（支持中毒持续伤害、增益、群体单条日志；多目标技能统一群体动画）
+# battle_engine.py - 最终版（支持中毒持续伤害、增益、群体单条日志；PVP战斗敌方位置镜像对称）
 import random
 import copy
 import re
@@ -8,6 +8,31 @@ from skill_engine import (
     resolve_skill, apply_skill, select_targets, can_act,
     is_skill_blocked_by_silence, update_status_duration
 )
+
+# ========== 九宫格镜像对称函数 ==========
+def mirror_position(pos: int) -> int:
+    """
+    九宫格水平镜像对称（左右翻转）
+    0(左上) ↔ 2(右上)
+    1(上中) ↔ 1(上中)
+    3(左中) ↔ 5(右中)
+    4(正中) ↔ 4(正中)
+    6(左下) ↔ 8(右下)
+    7(下中) ↔ 7(下中)
+    """
+    row = pos // 3
+    col = pos % 3
+    new_col = 2 - col
+    return row * 3 + new_col
+
+
+def mirror_team_positions(team: list) -> list:
+    """将队伍中所有武将的位置进行镜像转换"""
+    for hero in team:
+        if 'position' in hero:
+            hero['position'] = mirror_position(hero['position'])
+    return team
+
 
 # ========== 等级与经验计算 ==========
 EXP_BASE = 100
@@ -67,6 +92,9 @@ def calculate_team_power(team: List[Dict]) -> int:
 def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int = 20) -> Dict:
     left = copy.deepcopy(team_left)
     right = copy.deepcopy(team_right)
+    
+    # PVP 战斗：敌方队伍位置镜像对称（与左方阵营左右翻转）
+    right = mirror_team_positions(right)
 
     for h in left:
         if 'final_attrs' in h and h['final_attrs']:
@@ -138,11 +166,9 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
                 targets = select_targets(skill, attacker, allies, enemies, battle_context)
                 if targets:
                     skill_logs = apply_skill(skill, attacker, targets, battle_context, round_num)
-                    # 只要是多个目标，就视为群体技能（一次动画）
                     is_multi = len(targets) > 1
 
                     if is_multi:
-                        # 群体技能：只生成一条日志，包含所有目标信息
                         all_targets_info = []
                         for i, t in enumerate(targets):
                             damage = 0
@@ -168,7 +194,6 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
                             'text': f"{skill.get('display_name', skill.get('name'))} 对多个敌人造成伤害"
                         })
                     else:
-                        # 单体技能
                         for idx, msg in enumerate(skill_logs):
                             damage_match = re.search(r'造成\s*(\d+)\s*伤害', msg)
                             damage = int(damage_match.group(1)) if damage_match else 0

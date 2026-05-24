@@ -842,8 +842,9 @@ def get_html():
                 text-align: left;
                 margin-left: 10px;
             }
+            /* 关键修改：我方九宫格下移半个身体（约30px） */
             .left-grid-container .grid-3x3 {
-                transform: scale(0.85);
+                transform: scale(0.85) translateY(30px);
                 transform-origin: top left;
             }
             .grid-container.right-grid-container {
@@ -867,11 +868,17 @@ def get_html():
                 height: 80px;
             }
             .hero-avatar-mini {
-                max-width: 170%;
-                max-height: 170%;
+                max-width: 130%;
+                max-height: 130%;
+                bottom: -5px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            .right-grid .hero-avatar-mini {
+                transform: translateX(-50%) scaleX(-1);
             }
             .hero-name-mini {
-                bottom: 20px;
+                bottom: 18px;
                 font-size: 7px;
             }
             .hero-hp-mini {

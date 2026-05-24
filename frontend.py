@@ -621,50 +621,48 @@ def get_html():
                 left: 0;
                 right: 0;
                 flex-direction: column;
-                gap: 8px;
+                gap: 6px;
                 border-radius: 0;
                 background: rgba(0,0,0,0.7);
                 backdrop-filter: blur(12px);
-                padding: 8px 12px;
-                margin-bottom: 10px;
+                padding: 6px 10px;
+                margin-bottom: 8px;
             }
             .user-info {
                 justify-content: space-between;
                 width: 100%;
             }
             .user-avatar {
-                width: 36px;
-                height: 36px;
+                width: 32px;
+                height: 32px;
             }
             .user-name {
-                font-size: 14px;
+                font-size: 12px;
             }
             .user-resources {
-                gap: 12px;
+                gap: 8px;
             }
             .resource-item {
-                font-size: 12px;
-                padding: 2px 8px;
+                font-size: 11px;
+                padding: 2px 6px;
             }
             .music-control {
-                padding: 2px 8px;
+                padding: 2px 6px;
                 gap: 4px;
             }
             .music-control input {
-                width: 60px;
+                width: 55px;
             }
             .top-buttons {
                 width: 100%;
                 justify-content: space-around;
                 flex-wrap: wrap;
-                gap: 6px;
+                gap: 5px;
                 margin: 0;
             }
             .top-buttons button {
-                font-size: 12px;
-                padding: 4px 10px;
-                background: #2c3e2f;
-                border-radius: 30px;
+                font-size: 11px;
+                padding: 3px 8px;
             }
             .user-info, .user-resources, .top-buttons {
                 margin: 0;
@@ -673,219 +671,307 @@ def get_html():
             /* ========== 主内容区域 ========== */
             .main-content {
                 margin-top: 0;
-                padding: 8px;
+                padding: 8px 8px 80px 8px;
                 overflow-y: auto;
+                height: calc(100vh - 110px);
             }
 
             /* 标签页按钮行 */
             .tab-bar {
-                gap: 8px;
-                padding: 6px;
-                margin-bottom: 12px;
+                gap: 6px;
+                padding: 4px;
+                margin-bottom: 8px;
                 justify-content: center;
                 flex-wrap: wrap;
             }
             .tab-btn {
-                font-size: 12px;
-                padding: 4px 12px;
+                font-size: 11px;
+                padding: 3px 10px;
             }
 
-            /* 所有页面容器按比例缩小 */
-            .map-container,
-            .formation-area,
-            .gem-grid,
-            .city-layout {
-                transform: scale(0.9);
-                transform-origin: top center;
+            /* ========== 演武场 ========== */
+            .formation-area {
                 width: 100%;
             }
-
-            /* 副本节点链 - 水平滚动 */
-            .node-chain {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                justify-content: flex-start;
+            .formation-header {
+                flex-direction: column;
                 gap: 8px;
-                padding-bottom: 8px;
+                align-items: stretch;
+                margin-bottom: 12px;
             }
-            .node-card {
-                width: 110px;
-                padding: 8px;
-                flex-shrink: 0;
-            }
-            .node-name {
+            .formation-header label {
                 font-size: 12px;
             }
-            .node-power, .node-reward {
-                font-size: 10px;
+            .formation-select {
+                font-size: 12px;
+                padding: 3px 10px;
+                width: 100%;
             }
-            .connector {
-                font-size: 16px;
-                flex-shrink: 0;
+            .formation-header button {
+                font-size: 11px;
+                padding: 4px 8px;
+                margin: 2px 0;
             }
-
-            /* 演武场九宫格 */
             .formation-grid {
                 width: 100%;
-                gap: 8px;
-                padding: 12px;
-                transform: scale(0.9);
+                gap: 6px;
+                padding: 10px;
+                transform: scale(0.85);
+                transform-origin: top center;
+                margin-bottom: 10px;
             }
             .formation-slot {
                 width: auto;
                 height: auto;
-                min-height: 80px;
+                min-height: 70px;
             }
             .formation-hero img {
-                width: 40px;
-                height: 40px;
+                width: 35px;
+                height: 35px;
             }
             .formation-hero-name {
+                font-size: 8px;
+            }
+
+            /* ========== 副本节点 ========== */
+            .map-container {
+                width: 100%;
+                overflow-x: auto;
+            }
+            .node-chain {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                gap: 6px;
+                padding-bottom: 8px;
+            }
+            .node-card {
+                width: 95px;
+                padding: 6px;
+                flex-shrink: 0;
+            }
+            .node-name {
+                font-size: 11px;
+            }
+            .node-power, .node-reward {
                 font-size: 9px;
             }
 
-            /* 宝石区域 */
+            /* ========== 宝石区域 ========== */
+            .gem-grid {
+                transform: scale(0.9);
+                transform-origin: top center;
+                gap: 8px;
+            }
             .gem-card {
-                width: 75px;
+                width: 70px;
                 padding: 4px;
             }
             .gem-card strong {
-                font-size: 10px;
+                font-size: 9px;
             }
 
-            /* 碧游宫三列布局 */
+            /* ========== 碧游宫 ========== */
             .city-layout {
                 flex-direction: column;
-                gap: 12px;
-                transform: none;
+                gap: 10px;
             }
             .city-column {
                 width: 100%;
-                padding: 10px;
+                padding: 8px;
             }
             .branch-card {
-                padding: 6px;
-                gap: 6px;
+                padding: 5px;
+                gap: 5px;
             }
             .branch-card button {
-                padding: 2px 8px;
-                font-size: 10px;
-            }
-
-            /* ========== 战斗画面适配 ========== */
-            .battle-panel {
-                overflow: auto;
-                justify-content: flex-start;
-            }
-            .battlefield {
-                padding: 0 8px 20px;
-                overflow-x: auto;
-                justify-content: flex-start;
-                gap: 15px;
-            }
-            .grid-container.left-grid-container,
-            .grid-container.right-grid-container {
-                width: 280px;
-                flex-shrink: 0;
-            }
-            .grid-slot {
-                width: 80px;
-                height: 100px;
-            }
-            .hero-avatar-mini {
-                max-width: 200%;
-                max-height: 200%;
-            }
-            .hero-name-mini {
-                bottom: 28px;
+                padding: 2px 6px;
                 font-size: 9px;
             }
-            .hero-hp-mini {
-                bottom: 5px;
-                font-size: 8px;
-            }
-            .grid-row-1 {
-                margin-bottom: -25px;
-            }
-            .grid-row-2 {
-                margin-bottom: -25px;
+
+            /* ========== 战斗画面 - 对角布局（我方左上，敌方右下） ========== */
+            .battle-panel {
+                overflow-y: auto;
+                justify-content: flex-start;
+                padding: 5px 5px 60px 5px;
+                -webkit-overflow-scrolling: touch;
             }
             .health-bars {
-                padding: 15px 10px 5px;
-                flex-direction: column;
-                gap: 8px;
-            }
-            .team-health .total-bar {
-                width: 90%;
-                margin: 3px auto;
+                padding: 5px 8px;
+                flex-direction: row;
+                gap: 15px;
+                position: sticky;
+                top: 0;
+                background: rgba(0,0,0,0.7);
+                z-index: 10;
+                border-radius: 10px;
+                margin-bottom: 10px;
+                justify-content: center;
             }
             .team-health {
-                font-size: 12px;
+                font-size: 10px;
+                flex: 1;
+                text-align: center;
+                max-width: 150px;
+            }
+            .team-health .total-bar {
+                width: 100%;
+                height: 6px;
             }
             .power-value {
-                font-size: 10px;
-                padding: 1px 6px;
+                font-size: 9px;
+                padding: 1px 4px;
+            }
+            .battlefield {
+                padding: 0;
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+                overflow-x: visible;
+                min-height: 500px;
+            }
+            .grid-container.left-grid-container {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                margin-left: 0;
+            }
+            .left-grid-container .grid-title {
+                font-size: 12px;
+                text-align: left;
+                margin-left: 10px;
+            }
+            .left-grid-container .grid-3x3 {
+                transform: scale(0.85);
+                transform-origin: top left;
+            }
+            .grid-container.right-grid-container {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                margin-right: 0;
+            }
+            .right-grid-container .grid-title {
+                font-size: 12px;
+                text-align: right;
+                margin-right: 10px;
+            }
+            .right-grid-container .grid-3x3 {
+                transform: scale(0.85);
+                transform-origin: top right;
+            }
+            .grid-slot {
+                width: 60px;
+                height: 80px;
+            }
+            .hero-avatar-mini {
+                max-width: 170%;
+                max-height: 170%;
+            }
+            .hero-name-mini {
+                bottom: 20px;
+                font-size: 7px;
+            }
+            .hero-hp-mini {
+                bottom: 2px;
+                font-size: 6px;
+            }
+            .grid-row-1 {
+                margin-bottom: -12px;
+            }
+            .grid-row-2 {
+                margin-bottom: -12px;
             }
             .skill-video-placeholder {
-                width: 280px;
-                height: 158px;
+                width: 180px;
+                height: 101px;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 10300;
             }
             .skill-name-display {
-                font-size: 18px;
-                top: 120px;
-                padding: 4px 12px;
+                font-size: 12px;
+                top: 40%;
+                left: 50%;
+                transform: translate(-50%, -50%);
                 white-space: nowrap;
+                z-index: 10015;
+                padding: 2px 8px;
             }
             .controls {
-                gap: 12px;
-                padding: 8px;
+                position: sticky;
+                bottom: 0;
+                background: rgba(0,0,0,0.7);
+                padding: 6px;
+                gap: 20px;
+                margin-top: 15px;
+                display: flex;
+                justify-content: center;
             }
             .controls button {
                 padding: 4px 15px;
-                font-size: 14px;
+                font-size: 12px;
             }
             .enemy-avatars {
                 top: 5px;
                 right: 5px;
-                padding: 3px 6px;
+                padding: 2px 5px;
+                background: rgba(0,0,0,0.5);
+                border-radius: 20px;
             }
             .enemy-avatar-item {
-                width: 35px;
+                width: 30px;
             }
             .enemy-avatar-item img {
-                width: 28px;
-                height: 28px;
+                width: 24px;
+                height: 24px;
             }
             .enemy-hp {
                 font-size: 8px;
             }
 
-            /* ========== 底部日志面板 ========== */
-            .log-panel {
-                width: calc(100% - 20px);
-                right: 10px;
-                bottom: 10px;
-                left: 10px;
-                margin: 0;
+            /* ========== 万仙殿模态框缩小 ========== */
+            #recruitShopModal .modal-content {
+                width: 90vw;
+                max-width: 90vw;
+                max-height: 85vh;
+                padding: 8px;
             }
-            .log-header {
-                font-size: 12px;
+            #recruitShopModal .hero-grid {
+                gap: 6px;
+                max-height: 45vh;
+                overflow-y: auto;
+            }
+            #recruitShopModal .recruit-card {
+                width: 90px;
                 padding: 4px;
             }
-            .log-content {
-                height: 140px;
-                font-size: 10px;
+            #recruitShopModal .recruit-card img {
+                width: 60px;
+                height: 60px;
             }
-            .log-input input {
-                font-size: 12px;
-                padding: 4px;
+            #recruitShopModal .recruit-card button {
+                font-size: 9px;
+                padding: 2px 5px;
             }
-            .log-input button {
-                padding: 2px 10px;
-                font-size: 12px;
+            #recruitShopModal .pray-buttons {
+                gap: 6px;
+            }
+            #recruitShopModal .pray-btn {
+                width: 60px;
+                padding: 3px 5px;
+                font-size: 9px;
+            }
+            #recruitShopModal .pray-panel-in-modal {
+                margin-top: 10px;
+                padding-top: 8px;
             }
 
-            /* ========== 原有保留的适配 ========== */
+            /* ========== 其他 ========== */
             .friend-panel {
                 width: 90vw;
                 left: 5vw;
@@ -896,12 +982,39 @@ def get_html():
                 max-width: 95vw;
             }
             .hero-card {
-                width: 120px;
+                width: 105px;
             }
             .pray-btn {
-                width: 80px;
-                padding: 6px 10px;
-                font-size: 12px;
+                width: 70px;
+                padding: 5px 8px;
+                font-size: 10px;
+            }
+            .empty-slot {
+                font-size: 10px;
+            }
+            .log-panel {
+                width: calc(100% - 20px);
+                right: 10px;
+                bottom: 10px;
+                left: 10px;
+                margin: 0;
+                z-index: 10005;
+            }
+            .log-header {
+                font-size: 11px;
+                padding: 3px;
+            }
+            .log-content {
+                height: 120px;
+                font-size: 10px;
+            }
+            .log-input input {
+                font-size: 11px;
+                padding: 4px;
+            }
+            .log-input button {
+                padding: 2px 8px;
+                font-size: 11px;
             }
         }
     </style>

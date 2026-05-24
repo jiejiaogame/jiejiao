@@ -1685,7 +1685,7 @@ async function loadUserAvatar() {
         document.getElementById('userAvatar').src = '/static/images/avatars/hero.png';
 }
 function connectWebSocket() {
-    ws = new WebSocket(`ws://${location.host}/ws`);
+    ws = new WebSocket(`wss://${location.host}/ws`);
     ws.onopen = () => ws.send(JSON.stringify({ act: "login", uid: currentUser }));
     ws.onmessage = (e) => {
         let data = JSON.parse(e.data);

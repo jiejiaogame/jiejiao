@@ -781,5 +781,97 @@ def get_volume(username: str) -> int:
     user = get_user(username)
     return user.get("volume", 70) if user else 70
 
+# ---------- 生命值计算辅助函数（修复版）----------
+def calculate_hero_max_hp(hero_info: dict, star: int, level: int, bonus_hp: int = 0, gem_hp_bonus: int = 0) -> int:
+    """
+    计算武将最大生命值
+    hero_info: 武将基础数据（包含 star1_hp, star2_hp, star3_hp, star4_hp, star5_hp）
+    star: 当前星级 (1-5)
+    level: 当前等级 (1-100)
+    bonus_hp: 自由加点提供的生命值加成
+    gem_hp_bonus: 宝石提供的生命值加成
+    """
+    # 获取当前星级的基础生命值
+    base_key = f"star{star}_hp"
+    base_hp = hero_info.get(base_key, hero_info.get("star5_hp", 100))
+    
+    # 每级成长系数（线性增长，1级为基础值，100级约为基础值的2倍）
+    growth_factor = 1 + (level - 1) / 99  # 1级=1.0，100级=2.0
+    hp_from_level = int(base_hp * growth_factor)
+    
+    # 加上自由加点加成和宝石加成
+    total_hp = hp_from_level + bonus_hp + gem_hp_bonus
+    
+    return max(1, total_hp)
+
+def calculate_hero_current_hp(hero_info: dict, star: int, level: int, current_hp_ratio: float = 1.0, 
+                               bonus_hp: int = 0, gem_hp_bonus: int = 0) -> int:
+    """
+    计算武将当前生命值
+    current_hp_ratio: 当前血量比例 (0.0-1.0)，用于战斗后恢复场景
+    """
+    max_hp = calculate_hero_max_hp(hero_info, star, level, bonus_hp, gem_hp_bonus)
+    return int(max_hp * current_hp_ratio)
+
+def get_hero_max_hp_from_user(username: str, hero_name: str) -> int:
+    """
+    从用户数据中获取指定武将的最大生命值
+    """
+    user = get_user(username)
+    if not user:
+        return 0
+    
+    # 加载武将基础数据
+    heroes_db = load_heroes_db()
+    hero_map = {h["name"]: h for h in heroes_db.get("heroes", [])}
+    hero_info = hero_map.get(hero_name)
+    if not hero_info:
+        return 0
+    
+    star = user.get("star_heroes", {}).get(hero_name, 1)
+    level = user.get("hero_level", {}).get(hero_name, 1)
+    bonus_attrs = user.get("hero_bonus_attrs", {}).get(hero_name, {})
+    bonus_hp = bonus_attrs.get("hp", 0)
+    
+    # 计算宝石生命加成
+    hero_gems = user.get("hero_gems", {}).get(hero_name, [])
+    gem_hp_bonus = 0
+    for gem_id in hero_gems:
+        if gem_id:
+            items = user.get("items", {})
+            gem = items.get(gem_id)
+            if gem:
+                if gem.get("attr") == "hp":
+                    gem_hp_bonus += gem.get("value", 0)
+                if gem.get("double_attr") and gem["double_attr"].get("attr") == "hp":
+                    gem_hp_bonus += gem["double_attr"].get("value", 0)
+    
+    return calculate_hero_max_hp(hero_info, star, level, bonus_hp, gem_hp_bonus)
+
+def get_team_total_hp(username: str, formation: list = None) -> int:
+    """
+    获取玩家出战队伍的总生命值
+    """
+    if formation is None:
+        formation = get_formation_legacy(username)
+    
+    total_hp = 0
+    for hero_name in formation:
+        if hero_name:
+            total_hp += get_hero_max_hp_from_user(username, hero_name)
+    return total_hp
+
+def apply_damage_to_hero(hero_current_hp: int, damage: int) -> int:
+    """
+    对武将造成伤害，返回新的当前生命值
+    """
+    return max(0, hero_current_hp - damage)
+
+def heal_hero(hero_current_hp: int, hero_max_hp: int, heal_amount: int) -> int:
+    """
+    治疗武将，返回新的当前生命值（不超过最大生命值）
+    """
+    return min(hero_max_hp, hero_current_hp + heal_amount)
+
 # ---------- 初始化 ----------
 init_db()

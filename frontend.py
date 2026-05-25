@@ -1,4 +1,4 @@
-# frontend.py - 完整版（手机/电脑双适配，移动端按钮隐藏）
+# frontend.py - 最终修复版（手机血量条可见、聊天功能正常）
 def get_html():
     return '''<!DOCTYPE html>
 <html lang="zh-CN">
@@ -614,37 +614,9 @@ def get_html():
             transition: width 0.3s;
         }
         
-        /* 电脑版隐藏移动端按钮 */
-        .log-controls {
-            display: none;
-        }
-        
         /* ========== 手机版适配（宽度 ≤ 768px） ========== */
         @media (max-width: 768px) {
-            /* 电脑版隐藏的按钮在手机版显示 */
-            .log-controls {
-                display: flex;
-                justify-content: center;
-                gap: 20px;
-                padding: 6px;
-                background: rgba(0,0,0,0.5);
-                border-top: 1px solid #555;
-            }
-            .log-controls button {
-                padding: 4px 20px;
-                font-size: 12px;
-                background: #d99e3e;
-                border: none;
-                border-radius: 30px;
-                font-weight: bold;
-                cursor: pointer;
-                color: #111;
-            }
-            .log-controls button:active {
-                transform: scale(0.98);
-            }
-            
-            /* ========== 顶部栏：垂直三行布局 ========== */
+            /* ========== 顶部栏：紧凑两行布局 ========== */
             .top-bar {
                 position: relative;
                 top: 0;
@@ -659,39 +631,46 @@ def get_html():
                 margin-bottom: 8px;
             }
             .user-info {
+                display: flex;
+                align-items: center;
                 justify-content: space-between;
                 width: 100%;
+                gap: 6px;
+                flex-wrap: wrap;
             }
             .user-avatar {
-                width: 32px;
-                height: 32px;
+                width: 28px;
+                height: 28px;
             }
             .user-name {
                 font-size: 12px;
             }
             .user-resources {
-                gap: 8px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
             .resource-item {
-                font-size: 11px;
-                padding: 2px 6px;
+                font-size: 10px;
+                padding: 2px 5px;
             }
             .music-control {
-                padding: 2px 6px;
-                gap: 4px;
+                padding: 2px 5px;
+                gap: 3px;
             }
             .music-control input {
-                width: 55px;
+                width: 50px;
             }
             .top-buttons {
                 width: 100%;
+                display: flex;
                 justify-content: space-around;
                 flex-wrap: wrap;
-                gap: 5px;
+                gap: 4px;
                 margin: 0;
             }
             .top-buttons button {
-                font-size: 11px;
+                font-size: 10px;
                 padding: 3px 8px;
             }
             .user-info, .user-resources, .top-buttons {
@@ -819,38 +798,52 @@ def get_html():
                 font-size: 9px;
             }
 
-            /* ========== 战斗画面 - 手机版专用 ========== */
+            /* ========== 战斗画面（手机版专用，血量条可见） ========== */
             .battle-panel {
                 overflow-y: auto;
                 justify-content: flex-start;
-                padding: 5px 5px 10px 5px;
+                padding: 5px 5px 120px 5px;
                 -webkit-overflow-scrolling: touch;
             }
-            /* 血量条区域 - 紧贴九宫格上方 */
+            /* 血量条区域 - 确保手机版可见 */
             .health-bars {
-                padding: 0 8px 5px 8px;
+                padding: 8px 12px;
                 flex-direction: row;
-                gap: 15px;
-                background: transparent;
-                margin-bottom: 5px;
+                gap: 20px;
+                background: rgba(0,0,0,0.8);
+                border-radius: 12px;
+                margin-bottom: 10px;
                 justify-content: center;
+                border: 1px solid gold;
             }
             .team-health {
-                font-size: 10px;
+                font-size: 12px;
                 flex: 1;
                 text-align: center;
-                max-width: 150px;
-                background: rgba(0,0,0,0.5);
+                max-width: 160px;
+                background: rgba(30,40,30,0.9);
                 border-radius: 10px;
-                padding: 3px 5px;
+                padding: 5px 8px;
+                border: 1px solid #d99e3e;
             }
             .team-health .total-bar {
                 width: 100%;
-                height: 6px;
+                height: 8px;
+                background: #3a2a2a;
+                border-radius: 4px;
+                margin-top: 4px;
+                overflow: hidden;
+            }
+            .team-health .total-fill {
+                height: 100%;
+                background: #5cb85c;
+                transition: width 0.2s;
             }
             .power-value {
-                font-size: 9px;
-                padding: 1px 4px;
+                font-size: 10px;
+                padding: 2px 6px;
+                background: rgba(0,0,0,0.5);
+                border-radius: 20px;
             }
             .battlefield {
                 padding: 0;
@@ -860,14 +853,14 @@ def get_html():
                 overflow-x: visible;
                 min-height: auto;
             }
-            /* 我方阵营 - 下移半人距离 */
+            /* 我方阵营 - 下移半个人距离 */
             .grid-container.left-grid-container {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
                 margin-left: 0;
-                margin-top: 40px;
+                margin-top: 30px;
             }
             .left-grid-container .grid-title {
                 font-size: 12px;
@@ -879,14 +872,15 @@ def get_html():
                 transform: scale(0.85);
                 transform-origin: top left;
             }
-            /* 敌方阵营 - 保持当前位置 */
+            /* 敌方阵营 - 上移一个人距离 */
             .grid-container.right-grid-container {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: flex-end;
                 margin-right: 0;
-                margin-bottom: 15px;
+                margin-top: -60px;
+                margin-bottom: 0;
             }
             .right-grid-container .grid-title {
                 font-size: 12px;
@@ -926,7 +920,6 @@ def get_html():
             .grid-row-2 {
                 margin-bottom: -12px;
             }
-            /* 技能动画 - 居中于两个九宫格之间 */
             .skill-video-placeholder {
                 width: 180px;
                 height: 101px;
@@ -938,16 +931,37 @@ def get_html():
             }
             .skill-name-display {
                 font-size: 12px;
-                top: 45%;
+                top: 40%;
                 left: 50%;
                 transform: translate(-50%, -50%);
                 white-space: nowrap;
                 z-index: 10015;
                 padding: 2px 8px;
             }
-            /* 手机版：隐藏原战斗面板底部的控制按钮 */
-            .battle-panel .controls {
-                display: none;
+            /* 保留战斗面板底部的控制按钮（电脑版相同） */
+            .controls {
+                position: sticky;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                padding: 10px;
+                gap: 20px;
+                margin-top: 15px;
+                display: flex;
+                justify-content: center;
+                z-index: 20;
+                border-radius: 30px;
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .controls button {
+                padding: 6px 20px;
+                font-size: 14px;
+                background: #d99e3e;
+                color: #1e2a2e;
+                border: none;
+                border-radius: 40px;
+                font-weight: bold;
             }
             .enemy-avatars {
                 top: 5px;
@@ -967,7 +981,7 @@ def get_html():
                 font-size: 8px;
             }
 
-            /* ========== 日志栏 - 手机版调整 ========== */
+            /* ========== 日志栏 - 聊天文字金黄色 ========== */
             .log-panel {
                 width: calc(100% - 20px);
                 right: 10px;
@@ -984,10 +998,8 @@ def get_html():
                 height: 120px;
                 font-size: 10px;
             }
-            .log-input {
-                display: flex;
-                border-top: 1px solid #555;
-                padding: 5px;
+            .log-content p {
+                color: #ffaa66;
             }
             .log-input input {
                 font-size: 11px;
@@ -1160,14 +1172,9 @@ def get_html():
         </div>
     </div>
 
-    <!-- 日志面板（电脑版和手机版共用，手机版会额外显示 .log-controls） -->
     <div class="log-panel" id="logPanel">
         <div class="log-header"><strong>📜 战报 & 聊天 (可拖动)</strong></div>
         <div class="log-content" id="logContent">等待战斗...</div>
-        <div class="log-controls">
-            <button id="skipFightBtnMobile" class="skip-btn">⏩ 跳过战斗</button>
-            <button id="escapeBtnMobile" class="escape-btn">🏃 逃跑</button>
-        </div>
         <div class="log-input"><input type="text" id="chatInput" placeholder="输入消息 (支持 @好友 私聊)"><button id="sendChatBtn">发送</button></div>
     </div>
 
@@ -1270,11 +1277,10 @@ let preloadTotal = 0;
 let preloadLoaded = 0;
 let preloadInProgress = false;
 let preloadUrls = [];
+
 // ========== 图片预加载核心函数 ==========
 async function collectPreloadUrls() {
     const urls = new Set();
-    
-    // 1. 所有武将立绘（从 my_heroes 获取）
     if (currentUser) {
         try {
             const res = await fetch(`/my_heroes?username=${currentUser}`);
@@ -1288,8 +1294,6 @@ async function collectPreloadUrls() {
             }
         } catch(e) { console.warn('获取武将列表失败', e); }
     }
-    
-    // 2. 所有背景图片
     const bgList = [
         '/static/images/bg/challenge_jinao.jpg',
         '/static/images/bg/challenge_sanxian.jpg',
@@ -1300,34 +1304,22 @@ async function collectPreloadUrls() {
         '/static/images/bg/battle_bg.jpg'
     ];
     for (const bg of bgList) urls.add(bg);
-    
-    // 3. 宝石图片
     const gemList = ['strength.png', 'intelligence.png', 'speed.png', 'hp.png', 'double.png'];
     for (const gem of gemList) urls.add(`/static/images/gems/${gem}`);
-    
-    // 4. 通用头像和特效
     urls.add('/static/images/avatars/hero.png');
     urls.add('/static/images/heroes/hero.png');
-    
     return Array.from(urls);
 }
 
 function preloadImage(url) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         if (imageCache.has(url)) {
             resolve(imageCache.get(url));
             return;
         }
         const img = new Image();
-        img.onload = () => {
-            imageCache.set(url, img);
-            resolve(img);
-        };
-        img.onerror = () => {
-            console.warn(`图片加载失败: ${url}`);
-            imageCache.set(url, null);
-            resolve(null);
-        };
+        img.onload = () => { imageCache.set(url, img); resolve(img); };
+        img.onerror = () => { imageCache.set(url, null); resolve(null); };
         img.src = url;
     });
 }
@@ -1349,14 +1341,11 @@ function hidePreloadProgress() {
 async function startPreload() {
     if (preloadInProgress) return;
     preloadInProgress = true;
-    
     preloadUrls = await collectPreloadUrls();
     preloadTotal = preloadUrls.length;
     preloadLoaded = 0;
-    
     console.log(`开始预加载 ${preloadTotal} 张图片...`);
     showPreloadProgress(0);
-    
     const batchSize = 10;
     for (let i = 0; i < preloadUrls.length; i += batchSize) {
         const batch = preloadUrls.slice(i, i + batchSize);
@@ -1368,16 +1357,13 @@ async function startPreload() {
         }));
         await new Promise(r => setTimeout(r, 50));
     }
-    
     console.log('图片预加载完成');
     setTimeout(hidePreloadProgress, 1000);
     preloadInProgress = false;
 }
 
 function getCachedImageUrl(url) {
-    if (imageCache.has(url) && imageCache.get(url)) {
-        return imageCache.get(url).src;
-    }
+    if (imageCache.has(url) && imageCache.get(url)) return imageCache.get(url).src;
     return url;
 }
 
@@ -1387,9 +1373,7 @@ function setCachedBackground(bgUrl) {
         appDiv.style.backgroundImage = `url(${imageCache.get(bgUrl).src})`;
     } else {
         appDiv.style.backgroundImage = `url(${bgUrl})`;
-        preloadImage(bgUrl).then(img => {
-            if (img) appDiv.style.backgroundImage = `url(${img.src})`;
-        });
+        preloadImage(bgUrl).then(img => { if (img) appDiv.style.backgroundImage = `url(${img.src})`; });
     }
     appDiv.style.backgroundSize = 'cover';
     appDiv.style.backgroundPosition = 'center';
@@ -1421,7 +1405,6 @@ function initMusic() {
     window.playBattleMusic = playBattleMusic;
     window.playWinSound = playWinSound;
     window.playLoseSound = playLoseSound;
-    
     const volumeSlider = document.getElementById('volumeSlider');
     if (volumeSlider) {
         volumeSlider.oninput = async (e) => {
@@ -1465,9 +1448,7 @@ function playWinSound() {
     winSound.currentTime = 0;
     winSound.play().catch(e => console.log);
     currentMusic = winSound;
-    winSound.onended = () => {
-        if (currentMusic === winSound) playBgMusic();
-    };
+    winSound.onended = () => { if (currentMusic === winSound) playBgMusic(); };
 }
 
 function playLoseSound() {
@@ -1476,9 +1457,7 @@ function playLoseSound() {
     loseSound.currentTime = 0;
     loseSound.play().catch(e => console.log);
     currentMusic = loseSound;
-    loseSound.onended = () => {
-        if (currentMusic === loseSound) playBgMusic();
-    };
+    loseSound.onended = () => { if (currentMusic === loseSound) playBgMusic(); };
 }
 
 function stopAllMusic() {
@@ -1493,40 +1472,22 @@ function stopAllMusic() {
 function setBackgroundByTab(tab) {
     let bgUrl = '';
     switch (tab) {
-        case 'map':
-            bgUrl = '/static/images/bg/challenge_jinao.jpg';
-            break;
-        case 'formation':
-            bgUrl = '/static/images/bg/lianxianzhen.jpg';
-            break;
-        case 'gems':
-            bgUrl = '/static/images/bg/bagualu.jpg';
-            break;
-        case 'city':
-            bgUrl = '/static/images/bg/biyougong.jpg';
-            break;
-        case 'recruit':
-            bgUrl = '/static/images/bg/wanxiandian.jpg';
-            break;
-        default:
-            bgUrl = '';
+        case 'map': bgUrl = '/static/images/bg/challenge_jinao.jpg'; break;
+        case 'formation': bgUrl = '/static/images/bg/lianxianzhen.jpg'; break;
+        case 'gems': bgUrl = '/static/images/bg/bagualu.jpg'; break;
+        case 'city': bgUrl = '/static/images/bg/biyougong.jpg'; break;
+        case 'recruit': bgUrl = '/static/images/bg/wanxiandian.jpg'; break;
+        default: bgUrl = '';
     }
-    if (bgUrl) {
-        setCachedBackground(bgUrl);
-    }
+    if (bgUrl) setCachedBackground(bgUrl);
 }
 
 function updateChallengeBackground() {
     let selectedId = document.getElementById('challengeSelect')?.value;
     let bgUrl = '';
-    if (selectedId === 'jinao') {
-        bgUrl = '/static/images/bg/challenge_jinao.jpg';
-    } else if (selectedId === 'sanxian') {
-        bgUrl = '/static/images/bg/challenge_sanxian.jpg';
-    }
-    if (bgUrl) {
-        setCachedBackground(bgUrl);
-    }
+    if (selectedId === 'jinao') bgUrl = '/static/images/bg/challenge_jinao.jpg';
+    else if (selectedId === 'sanxian') bgUrl = '/static/images/bg/challenge_sanxian.jpg';
+    if (bgUrl) setCachedBackground(bgUrl);
 }
 
 // ========== 辅助函数 ==========
@@ -1563,9 +1524,7 @@ async function loadHeroIdMap() {
     let r = await fetch(`/my_heroes?username=${currentUser}`);
     let d = await r.json();
     if (d.heroes) {
-        for (let h of d.heroes) {
-            heroIdMap[h.name] = h.id;
-        }
+        for (let h of d.heroes) heroIdMap[h.name] = h.id;
     }
 }
 
@@ -1601,7 +1560,7 @@ async function showPowerRank() {
     let resp = await fetch(`/rank/power?username=${currentUser}`);
     let data = await resp.json();
     if (data.success) {
-        let rankHtml = '<table class="rank-table"><table><th>排名</th><th>玩家</th><th>战力</th></tr>';
+        let rankHtml = '<table class="rank-table"><tr><th>排名</th><th>玩家</th><th>战力</th></tr>';
         data.rank.forEach((item, idx) => {
             rankHtml += `<tr><td>${idx+1}</td><td>${item.username}</td><td>${item.power}</td></tr>`;
         });
@@ -1701,7 +1660,6 @@ async function doAuth(mode, username, password, email = '') {
         }
         playBgMusic();
         startBlessingTimer();
-        // 开始预加载图片
         startPreload().catch(console.warn);
     } else alert(data.msg);
 }
@@ -1717,14 +1675,26 @@ async function loadUserResources() { let r = await fetch(`/user_resources?userna
 async function loadUserAvatar() { 
     let r = await fetch(`/user_info?username=${currentUser}`); 
     let d = await r.json(); 
-    if (d.success && d.avatar) 
-        document.getElementById('userAvatar').src = `/static/images/avatars/${d.avatar}`; 
-    else
-        document.getElementById('userAvatar').src = '/static/images/avatars/hero.png';
+    if (d.success && d.avatar) document.getElementById('userAvatar').src = `/static/images/avatars/${d.avatar}`; 
+    else document.getElementById('userAvatar').src = '/static/images/avatars/hero.png';
 }
+// ========== WebSocket（动态协议 + 自动重连） ==========
 function connectWebSocket() {
-    ws = new WebSocket(`ws://${location.host}/ws`);
-    ws.onopen = () => ws.send(JSON.stringify({ act: "login", uid: currentUser }));
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    ws = new WebSocket(`${protocol}${location.host}/ws`);
+    ws.onopen = () => {
+        console.log("WebSocket 已连接");
+        ws.send(JSON.stringify({ act: "login", uid: currentUser }));
+    };
+    ws.onerror = (err) => {
+        console.error("WebSocket 错误", err);
+        addLog("❌ 聊天服务器连接失败，5秒后重试", "red");
+        setTimeout(connectWebSocket, 5000);
+    };
+    ws.onclose = () => {
+        console.log("WebSocket 关闭，尝试重连...");
+        setTimeout(connectWebSocket, 5000);
+    };
     ws.onmessage = (e) => {
         let data = JSON.parse(e.data);
         if (data.type === "login_ok") console.log("登录成功");
@@ -1734,14 +1704,33 @@ function connectWebSocket() {
         }
         else if (data.type === "friend_list_update") loadFriendList();
         else if (data.type === "battle_result") {
-            document.getElementById('leftPower').innerText = data.left_power || 0; document.getElementById('rightPower').innerText = data.right_power || 0;
-            if (window.skipRequested) { if (typeof applyFinalHp === 'function') applyFinalHp(data.log, data.winner); if (typeof hideBattlePanel === 'function') hideBattlePanel(); window.isFighting = false; window.skipRequested = false; }
-            else { if (typeof showBattlePanel === 'function') showBattlePanel(data.left_team, data.right_team, data.log, data.winner, data.left_power, data.right_power, () => { }); }
-        } else if (data.type === "escape_result") { addLog("🏃 你逃跑了，战斗结束"); window.isFighting = false; if (typeof hideBattlePanel === 'function') hideBattlePanel(); }
-        else if (data.type === "gm_broadcast") { addLog(data.text, 'red'); }
-        else if (data.type === "muted") { addLog(data.text, 'orange'); alert(data.text); }
-        else if (data.type === "unmuted") { addLog(data.text, 'green'); }
-        else if (data.type === "kicked") { addLog(data.text, 'red'); alert(data.text); if (ws) ws.close(); setTimeout(() => { window.location.href = '/'; }, 2000); }
+            document.getElementById('leftPower').innerText = data.left_power || 0;
+            document.getElementById('rightPower').innerText = data.right_power || 0;
+            if (window.skipRequested) {
+                if (typeof applyFinalHp === 'function') applyFinalHp(data.log, data.winner);
+                if (typeof hideBattlePanel === 'function') hideBattlePanel();
+                window.isFighting = false;
+                window.skipRequested = false;
+            } else {
+                if (typeof showBattlePanel === 'function') showBattlePanel(data.left_team, data.right_team, data.log, data.winner, data.left_power, data.right_power, () => { });
+            }
+        } else if (data.type === "escape_result") {
+            addLog("🏃 你逃跑了，战斗结束");
+            window.isFighting = false;
+            if (typeof hideBattlePanel === 'function') hideBattlePanel();
+        } else if (data.type === "gm_broadcast") {
+            addLog(data.text, 'red');
+        } else if (data.type === "muted") {
+            addLog(data.text, 'orange');
+            alert(data.text);
+        } else if (data.type === "unmuted") {
+            addLog(data.text, 'green');
+        } else if (data.type === "kicked") {
+            addLog(data.text, 'red');
+            alert(data.text);
+            if (ws) ws.close();
+            setTimeout(() => { window.location.href = '/'; }, 2000);
+        }
     };
 }
 function sendChatMessage() {
@@ -1755,7 +1744,8 @@ function sendChatMessage() {
         addLog("❌ 未连接到聊天服务器");
     }
 }
-document.getElementById('sendChatBtn').onclick = sendChatMessage; document.getElementById('chatInput').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
+document.getElementById('sendChatBtn').onclick = sendChatMessage;
+document.getElementById('chatInput').onkeypress = e => { if (e.key === 'Enter') sendChatMessage(); };
 
 // ========== 标签页 ==========
 function initTabs() {
@@ -1813,8 +1803,15 @@ async function loadChallengeNodes(challengeId) {
 async function challengeNode(nodeId) {
     let r = await fetch('/challenge/challenge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, challenge_id: currentChallengeId, node_id: nodeId }) });
     let d = await r.json();
-    if (d.success) { if (typeof showBattlePanel === 'function') showBattlePanel(d.left_team, d.right_team, d.log, d.winner, d.left_power, d.right_power, async (winner) => { addLog(`🎉 挑战成功！获得经验${d.exp}，金币${d.gold}${d.gem ? '，获得宝石：' + d.gem.name : ''}`); await loadUserResources(); loadDailyTasks(); }); }
-    else { addLog(`❌ 挑战失败：${d.msg}`); if (d.left_team && d.right_team && typeof showBattlePanel === 'function') showBattlePanel(d.left_team, d.right_team, d.log, d.winner, d.left_power, d.right_power, () => { }); }
+    if (d.success) {
+        if (typeof showBattlePanel === 'function') showBattlePanel(d.left_team, d.right_team, d.log, d.winner, d.left_power, d.right_power, async (winner) => {
+            addLog(`🎉 挑战成功！获得经验${d.exp}，金币${d.gold}${d.gem ? '，获得宝石：' + d.gem.name : ''}`);
+            await loadUserResources(); loadDailyTasks();
+        });
+    } else {
+        addLog(`❌ 挑战失败：${d.msg}`);
+        if (d.left_team && d.right_team && typeof showBattlePanel === 'function') showBattlePanel(d.left_team, d.right_team, d.log, d.winner, d.left_power, d.right_power, () => { });
+    }
 }
 
 // ========== 演武场 ==========
@@ -1824,7 +1821,6 @@ async function loadFormation() {
     myFormation = d.formation || []; 
     renderFormationGrid(); 
 }
-
 function renderFormationGrid() {
     let slotsMap = { normal: [0,1,2,3,4], attack: [0,2,4,6,8], intelligence: [1,3,5,7,8], defense: [1,2,5,7,8], speed: [0,1,3,4,6] };
     let availableSlots = slotsMap[currentFormationType] || slotsMap.normal;
@@ -1849,7 +1845,6 @@ function renderFormationGrid() {
         container.appendChild(slotDiv);
     }
 }
-
 async function selectHeroForSlot(realPosition) {
     let slotsMap = { normal: [0,1,2,3,4], attack: [0,2,4,6,8], intelligence: [1,3,5,7,8], defense: [1,2,5,7,8], speed: [0,1,3,4,6] };
     let activeSlots = slotsMap[currentFormationType] || slotsMap.normal;
@@ -1857,7 +1852,6 @@ async function selectHeroForSlot(realPosition) {
         addLog("❌ 该位置不可用，请选择激活的格子");
         return;
     }
-    
     let r = await fetch(`/my_heroes?username=${currentUser}`);
     let d = await r.json();
     let heroes = d.heroes;
@@ -1866,30 +1860,21 @@ async function selectHeroForSlot(realPosition) {
     modal.className = 'modal';
     modal.innerHTML = `<div class="modal-content"><h3>选择武将</h3><div class="gem-grid" id="heroSelectList">${heroes.map(h => `<div class="hero-card" data-name="${h.name}" data-id="${h.id}"><img src="/static/images/heroes/${h.id}.png" onerror="this.src='/static/images/heroes/hero.png'"><div>${h.name}</div><div>Lv.${h.level} ★${h.star}</div></div>`).join('')}</div><button onclick="this.parentElement.parentElement.remove()">取消</button></div>`;
     document.body.appendChild(modal);
-    
     document.querySelectorAll('#heroSelectList .hero-card').forEach(card => {
         card.onclick = () => {
             let heroName = card.dataset.name;
             let existingIndex = myFormation.findIndex(f => f.name === heroName);
-            if (existingIndex !== -1) {
-                myFormation.splice(existingIndex, 1);
-                addLog(`⚔️ 已将 ${heroName} 从原位置替换到新位置`);
-            }
+            if (existingIndex !== -1) myFormation.splice(existingIndex, 1);
             myFormation.push({ name: heroName, position: realPosition });
             saveFormation();
             modal.remove();
         };
     });
 }
-
 function removeFromFormation(realPosition) {
     let index = myFormation.findIndex(f => f.position === realPosition);
-    if (index !== -1) {
-        myFormation.splice(index, 1);
-        saveFormation();
-    }
+    if (index !== -1) { myFormation.splice(index, 1); saveFormation(); }
 }
-
 async function saveFormation() {
     let r = await fetch('/save_formation', { 
         method: 'POST', 
@@ -1897,20 +1882,14 @@ async function saveFormation() {
         body: JSON.stringify({ username: currentUser, formation: myFormation, formation_type: currentFormationType }) 
     });
     let d = await r.json();
-    if (d.success) { 
-        renderFormationGrid(); 
-        addLog("💾 阵容已保存"); 
-    } else {
-        alert(d.msg);
-    }
+    if (d.success) { renderFormationGrid(); addLog("💾 阵容已保存"); }
+    else alert(d.msg);
 }
-
 async function saveFormationWithType() {
     currentFormationType = document.getElementById('formationType').value;
     addLog(`✨ 应用阵法：${document.getElementById('formationType').options[document.getElementById('formationType').selectedIndex].text}`);
     await saveFormation();
 }
-
 function clearCurrentFormation() {
     if (confirm("确定清空当前阵法下的所有站位吗？此操作不会影响其他阵法，但会清除当前已放置的武将。")) {
         myFormation = [];
@@ -1926,7 +1905,6 @@ const shopGems = [
     { type: 'speed', name: '敏捷宝石', icon: 'speed.png' },
     { type: 'hp', name: '生命宝石', icon: 'hp.png' }
 ];
-
 function renderGemShop() {
     let container = document.getElementById('gemShopContainer');
     if (!container) return;
@@ -1948,7 +1926,6 @@ function renderGemShop() {
         `;
     }
     container.innerHTML = html;
-
     document.querySelectorAll('.shop-qty-up').forEach(btn => {
         btn.onclick = (e) => {
             let type = btn.dataset.type;
@@ -1981,9 +1958,7 @@ function renderGemShop() {
                 await loadUserResources();
                 await loadGems();
                 await loadDailyTasks();
-            } else {
-                alert(data.msg);
-            }
+            } else alert(data.msg);
         };
     });
 }
@@ -2000,17 +1975,14 @@ async function loadGems() {
         let iconFile = 'gem.png';
         let nameText = g.name || '宝石';
         let detailText = '';
-
         if (g.id === 'exp_potion' || g.name === '经验药水' || (g.id && g.id.includes('exp_potion'))) {
             iconFile = '/static/images/items/exp_potion.png';
             nameText = '经验药水';
             detailText = `经验+${g.value || 200}`;
-        }
-        else if (g.double_attr) {
+        } else if (g.double_attr) {
             iconFile = 'double.png';
             detailText = `双属性 +${g.value}/${g.double_attr.value}`;
-        }
-        else {
+        } else {
             const attrMap = { strength: '力量', intelligence: '智力', speed: '敏捷', hp: '生命' };
             const attrCn = attrMap[g.attr] || g.attr;
             nameText = `${attrCn}宝石`;
@@ -2018,7 +1990,6 @@ async function loadGems() {
             const iconMap = { strength: 'strength.png', intelligence: 'intelligence.png', speed: 'speed.png', hp: 'hp.png' };
             iconFile = iconMap[g.attr] || 'gem.png';
         }
-
         let div = document.createElement('div');
         div.className = 'gem-card';
         div.innerHTML = `
@@ -2046,19 +2017,12 @@ async function loadGems() {
                 if (data.success) {
                     addLog(`🗑️ 已丢弃一颗${btn.parentElement.querySelector('strong')?.innerText || '宝石'}`);
                     await loadGems();
-                } else {
-                    alert(data.msg);
-                }
+                } else alert(data.msg);
             }
         };
     });
-
     let fusionDiv = document.getElementById('fusionSelect');
-    fusionDiv.innerHTML = `
-        <div><select id="gem1"><option value="">选择宝石1</option></select></div>
-        <div><select id="gem2"><option value="">选择宝石2</option></select></div>
-        <button id="doFuseBtn">融合</button>
-    `;
+    fusionDiv.innerHTML = `<div><select id="gem1"><option value="">选择宝石1</option></select></div><div><select id="gem2"><option value="">选择宝石2</option></select></div><button id="doFuseBtn">融合</button>`;
     let gem1Select = document.getElementById('gem1');
     let gem2Select = document.getElementById('gem2');
     let normalGems = items.filter(g => !g.double_attr && !(g.id === 'exp_potion' || g.name === '经验药水'));
@@ -2119,9 +2083,7 @@ async function loadGems() {
             addLog(`✨ ${data.msg}`);
             await loadGems();
             await loadUserResources();
-        } else {
-            alert(data.msg);
-        }
+        } else alert(data.msg);
     };
     let decomposeSelect = document.getElementById('decomposeSelect');
     decomposeSelect.innerHTML = '<option value="">请选择</option>';
@@ -2137,10 +2099,7 @@ async function openMyHeroes() {
     let r = await fetch(`/my_heroes?username=${currentUser}`); 
     let d = await r.json(); 
     let cont = document.getElementById('myHeroesList'); 
-    if (!cont) {
-        console.error("myHeroesList 元素不存在");
-        return;
-    }
+    if (!cont) { console.error("myHeroesList 元素不存在"); return; }
     cont.innerHTML = ''; 
     for (let h of d.heroes) { 
         let div = document.createElement('div'); 
@@ -2179,43 +2138,24 @@ async function selectGemForSlot(heroName, slot) {
     let r = await fetch(`/user_items?username=${currentUser}`);
     let d = await r.json();
     let gems = d.items || [];
-    if (gems.length === 0) {
-        alert("背包无宝石");
-        return;
-    }
+    if (gems.length === 0) { alert("背包无宝石"); return; }
     let modal = document.createElement('div');
     modal.className = 'modal';
     let gemsHtml = '<div id="gemSelectList" class="gem-grid" style="max-height:400px; overflow-y:auto;">';
     for (let g of gems) {
         let iconFile = 'gem.png';
-        if (g.double_attr) {
-            iconFile = 'double.png';
-        } else {
+        if (g.double_attr) iconFile = 'double.png';
+        else {
             if (g.attr === 'strength') iconFile = 'strength.png';
             else if (g.attr === 'intelligence') iconFile = 'intelligence.png';
             else if (g.attr === 'speed') iconFile = 'speed.png';
             else if (g.attr === 'hp') iconFile = 'hp.png';
         }
         let nameText = g.double_attr ? `${g.name}+${g.double_attr.attr}` : g.name;
-        gemsHtml += `
-            <div class="gem-card" data-id="${g.id}" style="cursor:pointer;">
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <img src="/static/images/gems/${iconFile}" style="width:48px; height:48px; object-fit:contain;" onerror="this.style.display='none'">
-                    <strong style="font-size:12px;">${nameText}</strong>
-                    <span style="font-size:11px;">★${g.star} +${g.value}</span>
-                    <span style="font-size:10px;">数量: ${g.count}</span>
-                </div>
-            </div>
-        `;
+        gemsHtml += `<div class="gem-card" data-id="${g.id}" style="cursor:pointer;"><div style="display:flex; flex-direction:column; align-items:center;"><img src="/static/images/gems/${iconFile}" style="width:48px; height:48px; object-fit:contain;" onerror="this.style.display='none'"><strong style="font-size:12px;">${nameText}</strong><span style="font-size:11px;">★${g.star} +${g.value}</span><span style="font-size:10px;">数量: ${g.count}</span></div></div>`;
     }
     gemsHtml += '</div>';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <h3>选择宝石镶嵌到 ${heroName} 的槽位 ${slot+1}</h3>
-            ${gemsHtml}
-            <button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;">取消</button>
-        </div>
-    `;
+    modal.innerHTML = `<div class="modal-content"><h3>选择宝石镶嵌到 ${heroName} 的槽位 ${slot+1}</h3>${gemsHtml}<button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;">取消</button></div>`;
     document.body.appendChild(modal);
     document.querySelectorAll('#gemSelectList .gem-card').forEach(card => {
         card.onclick = async () => {
@@ -2231,27 +2171,19 @@ async function selectGemForSlot(heroName, slot) {
                 modal.remove();
                 showHeroDetail(heroName);
                 loadGems();
-            } else {
-                alert(eqd.msg);
-            }
+            } else alert(eqd.msg);
         };
     });
 }
 
 function closeHeroDetail() { document.getElementById('heroDetailModal').style.display = 'none'; }
-function closeMyHeroes() { 
-    let modal = document.getElementById('myHeroesModal');
-    if (modal) modal.style.display = 'none';
-}
+function closeMyHeroes() { let modal = document.getElementById('myHeroesModal'); if (modal) modal.style.display = 'none'; }
 
 // ========== 每日任务 ==========
 async function loadDailyTasks() {
     let resp = await fetch(`/daily_tasks?username=${currentUser}`);
     let data = await resp.json();
-    if (!data.success) {
-        document.getElementById('dailyTasksPanel').innerHTML = '<p>任务加载失败</p>';
-        return;
-    }
+    if (!data.success) { document.getElementById('dailyTasksPanel').innerHTML = '<p>任务加载失败</p>'; return; }
     let tasks = data.tasks;
     const taskNames = {
         login: '每日登录',
@@ -2274,20 +2206,7 @@ async function loadDailyTasks() {
         else if (info.completed) status = '✔️ 可领取';
         else status = `⏳ ${info.current}/${info.need}`;
         let btnDisabled = (!info.completed || info.claimed);
-        html += `
-            <div class="task-item">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>${taskNames[id]}</strong><br>
-                        <span class="task-progress">🎁 ${taskReward[id]}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div>${status}</div>
-                        <button class="claim-task-btn" data-task="${id}" ${btnDisabled ? 'disabled' : ''}>领取</button>
-                    </div>
-                </div>
-            </div>
-        `;
+        html += `<div class="task-item"><div style="display: flex; justify-content: space-between; align-items: center;"><div><strong>${taskNames[id]}</strong><br><span class="task-progress">🎁 ${taskReward[id]}</span></div><div style="text-align: right;"><div>${status}</div><button class="claim-task-btn" data-task="${id}" ${btnDisabled ? 'disabled' : ''}>领取</button></div></div></div>`;
     }
     document.getElementById('dailyTasksPanel').innerHTML = html;
     document.querySelectorAll('.claim-task-btn').forEach(btn => {
@@ -2303,9 +2222,7 @@ async function loadDailyTasks() {
                 addLog(`✨ ${data.msg}`);
                 await loadDailyTasks();
                 await loadUserResources();
-            } else {
-                alert(data.msg);
-            }
+            } else alert(data.msg);
         };
     });
 }
@@ -2336,9 +2253,7 @@ async function loadBranchList() {
     for (let b of d.list) { 
         let remainText = b.expired ? '已到期' : `${Math.floor(b.remain_seconds / 60)}分${b.remain_seconds % 60}秒`;
         let canRecruit = b.remain_seconds <= 0;
-        let recruitBtn = canRecruit 
-            ? `<button onclick="viewFriendRecruit('${b.name}')">🏛️ 参观万仙殿</button>`
-            : `<button disabled style="opacity:0.5;">⏳ ${Math.floor(b.remain_seconds/60)}分${b.remain_seconds%60}秒后可招募</button>`;
+        let recruitBtn = canRecruit ? `<button onclick="viewFriendRecruit('${b.name}')">🏛️ 参观万仙殿</button>` : `<button disabled style="opacity:0.5;">⏳ ${Math.floor(b.remain_seconds/60)}分${b.remain_seconds%60}秒后可招募</button>`;
         html += `<div class="branch-card"><img src="/static/images/heroes/${b.avatar}" style="width:40px;border-radius:50%;cursor:pointer;" onclick="visitFriendPalace('${b.name}')"><div style="flex:1;">${b.name}</div><div>⏰ ${remainText}</div>${recruitBtn}<button onclick="releaseFriend('${b.name}')">释放</button></div>`; 
     }
     container.innerHTML = html; 
@@ -2356,16 +2271,7 @@ async function visitFriendPalace(friendName) {
     if (!d.success) { alert(d.msg || "无法获取好友碧游宫信息"); return; }
     let modal = document.createElement('div');
     modal.className = 'modal';
-    modal.innerHTML = `
-        <div class="modal-content" style="text-align:center;">
-            <h3>🏯 ${friendName} 的碧游宫</h3>
-            <img src="/static/images/avatars/${d.avatar}" style="width:80px; border-radius:50%; margin:10px auto; display:block;" onerror="this.src='/static/images/avatars/hero.png'">
-            <p>🌟 等级: ${d.level}</p>
-            <p>👑 占领者: ${d.occupier || '无'}</p>
-            <p>📜 分舵数量: ${d.branches}</p>
-            <button onclick="this.closest('.modal').remove()" style="margin-top:15px;">关闭</button>
-        </div>
-    `;
+    modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>🏯 ${friendName} 的碧游宫</h3><img src="/static/images/avatars/${d.avatar}" style="width:80px; border-radius:50%; margin:10px auto; display:block;" onerror="this.src='/static/images/avatars/hero.png'"><p>🌟 等级: ${d.level}</p><p>👑 占领者: ${d.occupier || '无'}</p><p>📜 分舵数量: ${d.branches}</p><button onclick="this.closest('.modal').remove()" style="margin-top:15px;">关闭</button></div>`;
     document.body.appendChild(modal);
 }
 async function viewFriendRecruit(friendName) {
@@ -2385,25 +2291,11 @@ async function viewFriendRecruit(friendName) {
         shopHtml += '<div style="text-align:center; padding:20px;">🏛️ 万仙殿空空如也，暂无武将可招募</div>';
     } else {
         for (let [name, info] of Object.entries(d.shop)) {
-            shopHtml += `
-                <div class="recruit-card" data-name="${name}">
-                    <img src="/static/images/heroes/${info.hero_id}.png" onerror="this.src='/static/images/heroes/hero.png'">
-                    <div>${name}</div>
-                    <div>★${info.star}</div>
-                    <div>💰${info.cost}</div>
-                    <button class="hire-from-occupied" data-name="${name}">招募</button>
-                </div>
-            `;
+            shopHtml += `<div class="recruit-card" data-name="${name}"><img src="/static/images/heroes/${info.hero_id}.png" onerror="this.src='/static/images/heroes/hero.png'"><div>${name}</div><div>★${info.star}</div><div>💰${info.cost}</div><button class="hire-from-occupied" data-name="${name}">招募</button></div>`;
         }
     }
     shopHtml += '</div>';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <h3>🏛️ ${d.target || friendName} 的万仙殿${data.isOccupiedByMe ? '（分舵）' : '（参观模式）'}</h3>
-            ${shopHtml}
-            <button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;">关闭</button>
-        </div>
-    `;
+    modal.innerHTML = `<div class="modal-content"><h3>🏛️ ${d.target || friendName} 的万仙殿${data.isOccupiedByMe ? '（分舵）' : '（参观模式）'}</h3>${shopHtml}<button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;">关闭</button></div>`;
     document.body.appendChild(modal);
     if (data.isOccupiedByMe && data.canRecruit) {
         document.querySelectorAll('.hire-from-occupied').forEach(btn => {
@@ -2421,17 +2313,11 @@ async function viewFriendRecruit(friendName) {
                     await loadUserResources();
                     await loadGems();
                     await loadBranchList();
-                } else {
-                    alert(res.msg);
-                }
+                } else alert(res.msg);
             };
         });
     } else {
-        document.querySelectorAll('.hire-from-occupied').forEach(btn => {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.innerText = '不可招募';
-        });
+        document.querySelectorAll('.hire-from-occupied').forEach(btn => { btn.disabled = true; btn.style.opacity = '0.5'; btn.innerText = '不可招募'; });
     }
 }
 
@@ -2440,14 +2326,9 @@ async function openRecruitShop() {
     if (!currentUser) { alert("请先登录"); return; }
     let mainContent = document.getElementById('mainContent');
     if (mainContent) mainContent.style.display = 'none';
-    
     let infoDiv = document.getElementById('recruitShopInfo');
     let heroesDiv = document.getElementById('recruitHeroes');
-    if (!infoDiv || !heroesDiv) {
-        console.error("招募模态框元素缺失，请检查 HTML");
-        alert("页面错误，请联系管理员");
-        return;
-    }
+    if (!infoDiv || !heroesDiv) { alert("页面错误，请联系管理员"); return; }
     let r = await fetch(`/recruit/shop?username=${currentUser}`); 
     let d = await r.json(); 
     if (d.error) { alert(d.error); return; } 
@@ -2493,39 +2374,25 @@ async function loadPrayStatus() {
             if (remainSpan) {
                 remainSpan.innerText = `今日剩余: ${data.remainCount}/10`;
                 if (data.hasBuff) {
-                    btns.forEach(btn => {
-                        btn.classList.add('disabled');
-                        btn.title = '盘古祝福生效中，请等待1小时后再祈愿';
-                    });
+                    btns.forEach(btn => { btn.classList.add('disabled'); btn.title = '盘古祝福生效中，请等待1小时后再祈愿'; });
                     remainSpan.style.color = '#ff8888';
                     remainSpan.title = '盘古祝福生效中，无法祈愿';
                 } else if (data.remainCount <= 0) {
-                    btns.forEach(btn => {
-                        btn.classList.remove('disabled');
-                        btn.title = '特殊祈愿（80%概率获得1小时盘古祝福）';
-                    });
+                    btns.forEach(btn => { btn.classList.remove('disabled'); btn.title = '特殊祈愿（80%概率获得1小时盘古祝福）'; });
                     remainSpan.style.color = '#ffaa66';
                     remainSpan.title = '今日正常祈愿次数已用完，接下来进行特殊祈愿';
                 } else {
-                    btns.forEach(btn => {
-                        btn.classList.remove('disabled');
-                        btn.title = '';
-                    });
+                    btns.forEach(btn => { btn.classList.remove('disabled'); btn.title = ''; });
                     remainSpan.style.color = '';
                     remainSpan.title = '';
                 }
             }
         }
-    } catch (e) {
-        console.warn('加载祈愿状态失败', e);
-    }
+    } catch (e) { console.warn('加载祈愿状态失败', e); }
 }
 
 async function pray(prayType) {
-    if (!currentUser) {
-        alert("请先登录");
-        return;
-    }
+    if (!currentUser) { alert("请先登录"); return; }
     const resultDiv = document.getElementById('prayResult');
     resultDiv.innerHTML = "⏳ 祈祷中...";
     try {
@@ -2558,26 +2425,19 @@ async function pray(prayType) {
             startBlessingTimer();
         } else {
             resultDiv.innerHTML = `❌ ${data.msg}`;
-            if (data.msg && data.msg.includes('盘古祝福')) {
-                await loadPrayStatus();
-            }
+            if (data.msg && data.msg.includes('盘古祝福')) await loadPrayStatus();
         }
     } catch (err) {
         resultDiv.innerHTML = `⚠️ 网络错误: ${err.message}`;
     }
     setTimeout(() => {
-        if (resultDiv.innerHTML !== "⏳ 祈祷中...") {
-            setTimeout(() => { resultDiv.innerHTML = ''; }, 3000);
-        }
+        if (resultDiv.innerHTML !== "⏳ 祈祷中...") setTimeout(() => { resultDiv.innerHTML = ''; }, 3000);
     }, 2000);
 }
 
 function bindPrayButtons() {
     document.querySelectorAll('.pray-btn').forEach(btn => {
-        btn.onclick = () => {
-            const type = btn.dataset.type;
-            pray(type);
-        };
+        btn.onclick = () => { const type = btn.dataset.type; pray(type); };
     });
 }
 
@@ -2620,39 +2480,19 @@ async function updateOccupyRescueButtons(friendName) {
     let rescueBtn = document.getElementById(`rescueBtn_${friendName}`);
     let robBtn = document.getElementById(`robBtn_${friendName}`);
     if (occupyBtn) {
-        if (occupier) {
-            occupyBtn.disabled = true;
-            occupyBtn.title = `${friendName} 已被 ${occupier} 占领`;
-            occupyBtn.style.opacity = '0.5';
-        } else {
-            occupyBtn.disabled = false;
-            occupyBtn.title = '点击占领';
-            occupyBtn.style.opacity = '1';
-        }
+        if (occupier) { occupyBtn.disabled = true; occupyBtn.title = `${friendName} 已被 ${occupier} 占领`; occupyBtn.style.opacity = '0.5'; }
+        else { occupyBtn.disabled = false; occupyBtn.title = '点击占领'; occupyBtn.style.opacity = '1'; }
     }
     if (rescueBtn) {
-        if (occupier === currentUser) {
-            rescueBtn.disabled = true;
-            rescueBtn.title = '你已占领此好友';
-        } else if (occupier) {
-            rescueBtn.disabled = false;
-            rescueBtn.title = `解救 ${friendName} 脱离 ${occupier}`;
-        } else {
-            rescueBtn.disabled = true;
-            rescueBtn.title = '好友未被占领，无需解救';
-        }
+        if (occupier === currentUser) rescueBtn.disabled = true;
+        else if (occupier) rescueBtn.disabled = false;
+        else rescueBtn.disabled = true;
     }
     if (robBtn) {
         if (occupier && occupier !== currentUser) {
             robBtn.disabled = false;
-            robBtn.style.opacity = '1';
             robBtn.onclick = () => { closeModal(robBtn); robOccupied(friendName); };
-        } else {
-            robBtn.disabled = true;
-            robBtn.style.opacity = '0.5';
-            robBtn.onclick = null;
-            robBtn.title = occupier ? '你已是占领者或没有占领者' : '无人占领，无法抢夺';
-        }
+        } else { robBtn.disabled = true; }
     }
 }
 function privateChat(friendName) {
@@ -2678,12 +2518,10 @@ async function robOccupied(friendName) {
         addLog(`⚔️ ${d.msg}`);
         loadFriendList();
         loadCityInfo();
-    } else {
-        alert(d.msg);
-    }
+    } else alert(d.msg);
 }
 async function deleteFriendConfirm(friendName) { if (!confirm(`确定删除好友 ${friendName} 吗？`)) return; let m = document.querySelector('.modal'); if (m) m.remove(); let r = await fetch('/api/friend/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, friend: friendName }) }); let d = await r.json(); if (d.success) { addLog(`已删除好友 ${friendName}`); loadFriendList(); } else alert(d.msg); }
-async function addToBlacklist(friendName) { if (!confirm(`确定将 ${friendName} 拉入黑名单吗？\\n拉黑后无法进行私聊和任何好友互动。`)) return; let m = document.querySelector('.modal'); if (m) m.remove(); let r = await fetch('/api/blacklist/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, target: friendName }) }); let d = await r.json(); if (d.success) { addLog(`🚫 ${friendName} 已被加入黑名单`); await fetch('/api/friend/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, friend: friendName }) }); loadFriendList(); loadBlacklist(); } else alert(d.msg); }
+async function addToBlacklist(friendName) { if (!confirm(`确定将 ${friendName} 拉入黑名单吗？\n拉黑后无法进行私聊和任何好友互动。`)) return; let m = document.querySelector('.modal'); if (m) m.remove(); let r = await fetch('/api/blacklist/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, target: friendName }) }); let d = await r.json(); if (d.success) { addLog(`🚫 ${friendName} 已被加入黑名单`); await fetch('/api/friend/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, friend: friendName }) }); loadFriendList(); loadBlacklist(); } else alert(d.msg); }
 async function soloPracticeFromFriend() { let r = await fetch('/solo_practice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) }); let d = await r.json(); if (d.success) { if (typeof showBattlePanel === 'function') showBattlePanel(d.left_team, d.right_team, d.log, d.winner, d.left_power, d.right_power, (winner) => { addLog(`🧘 自我切磋结束，胜者: ${winner === 'left' ? '玩家' : '镜像'}，获得经验${d.exp_gain}`); if (d.exp_gain) loadUserResources(); loadDailyTasks(); }, currentUser); } else alert(d.msg); }
 function toggleFriendPanel() { let p = document.getElementById('friendPanel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; if (p.style.display === 'block') { loadFriendList(); loadBlacklist(); setSelfInfo(); } }
 async function sendFriendRequest() { let to = document.getElementById('addFriendInput').value.trim(); if (!to) return; let r = await fetch('/api/friend/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from: currentUser, to: to }) }); let d = await r.json(); alert(d.msg); if (d.success) { document.getElementById('addFriendInput').value = ''; loadFriendList(); } }
@@ -2721,43 +2559,37 @@ function closeAvatarModal() { document.getElementById('avatarModal').style.displ
 
 function logout() { if (confirm("确定注销？")) { if (branchTimer) clearInterval(branchTimer); localStorage.removeItem('jijiao_user'); location.reload(); } }
 
-// ========== 战斗控制（同时绑定电脑版和移动端按钮） ==========
+// ========== 战斗控制 ==========
 function initBattleControls() {
     const skipBtn = document.getElementById('skipFightBtn');
     const escapeBtn = document.getElementById('escapeBtn');
-    const skipBtnMobile = document.getElementById('skipFightBtnMobile');
-    const escapeBtnMobile = document.getElementById('escapeBtnMobile');
-    
-    const skipHandler = () => {
-        if (window.currentAnimationPromise) {
+    if (skipBtn) {
+        skipBtn.onclick = () => {
+            if (window.currentAnimationPromise) {
+                window.skipRequested = true;
+                if (typeof addLog === 'function') addLog("⏩ 跳过战斗，直接结算...");
+            } else {
+                if (typeof addLog === 'function') addLog("当前没有进行中的战斗，无法跳过");
+            }
+        };
+    }
+    if (escapeBtn) {
+        escapeBtn.onclick = () => {
+            if (!window.currentAnimationPromise && !window.isFighting) {
+                if (typeof addLog === 'function') addLog("没有进行中的战斗");
+                return;
+            }
+            if (typeof addLog === 'function') addLog("🏃 你逃跑了，战斗结束");
             window.skipRequested = true;
-            if (typeof addLog === 'function') addLog("⏩ 跳过战斗，直接结算...");
-        } else {
-            if (typeof addLog === 'function') addLog("当前没有进行中的战斗，无法跳过");
-        }
-    };
-    
-    const escapeHandler = () => {
-        if (!window.currentAnimationPromise && !window.isFighting) {
-            if (typeof addLog === 'function') addLog("没有进行中的战斗");
-            return;
-        }
-        if (typeof addLog === 'function') addLog("🏃 你逃跑了，战斗结束");
-        window.skipRequested = true;
-        window.isFighting = false;
-        if (typeof hideBattlePanel === 'function') hideBattlePanel();
-        playBgMusic();
-        if (typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ act: "escape" }));
-        }
-    };
-    
-    if (skipBtn) skipBtn.onclick = skipHandler;
-    if (escapeBtn) escapeBtn.onclick = escapeHandler;
-    if (skipBtnMobile) skipBtnMobile.onclick = skipHandler;
-    if (escapeBtnMobile) escapeBtnMobile.onclick = escapeHandler;
+            window.isFighting = false;
+            if (typeof hideBattlePanel === 'function') hideBattlePanel();
+            playBgMusic();
+            if (typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ act: "escape" }));
+            }
+        };
+    }
 }
-
 async function loadPendingRequests() {
     let resp = await fetch(`/api/friend/pending?username=${currentUser}`);
     let data = await resp.json();

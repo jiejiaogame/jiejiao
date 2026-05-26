@@ -189,17 +189,20 @@ def get_html():
     .top-buttons {
         grid-area: buttons;
         display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        gap: 4px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        padding-bottom: 4px;
     }
     .top-buttons button {
-        font-size: 11px;
-        padding: 4px 10px;
+        font-size: 10px;
+        padding: 4px 8px;
         background: #2c3e2f;
         border-radius: 30px;
         color: white;
         white-space: nowrap;
+        flex-shrink: 0;
     }
     #blessingTimer {
         display: none !important;
@@ -319,7 +322,7 @@ def get_html():
         font-size: 9px;
     }
 
-    /* ========== 战斗画面（手机版） ========== */
+    /* 战斗画面 - 紧凑布局 */
     .battle-panel {
         overflow-y: auto;
         justify-content: flex-start;
@@ -381,7 +384,7 @@ def get_html():
         overflow-x: visible;
         min-height: auto;
     }
-    /* 我方阵营 - 不下移，紧贴上方 */
+    /* 我方阵营 - 紧贴血量条 */
     .grid-container.left-grid-container {
         width: 100%;
         display: flex;
@@ -404,14 +407,14 @@ def get_html():
         transform: scale(0.85);
         transform-origin: top left;
     }
-    /* 敌方阵营 - 上移，使两阵之间只隔一人高 */
+    /* 敌方阵营 - 上移一个人物高度，使双方紧凑 */
     .grid-container.right-grid-container {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         margin-right: 0;
-        margin-top: -140px;
+        margin-top: -150px;      /* 上移 150px，约一个人物高度 */
         margin-bottom: 0;
     }
     .right-grid-container .grid-title {
@@ -474,10 +477,11 @@ def get_html():
         z-index: 10015;
         padding: 2px 8px;
     }
+    /* 逃跑按钮随敌方上移 */
     .controls {
         position: relative;
         z-index: 10003;
-        margin-top: -110px;
+        margin-top: -150px;
         margin-left: 5px;
         margin-right: auto;
         width: fit-content;
@@ -606,6 +610,11 @@ def get_html():
     }
     .empty-slot {
         font-size: 10px;
+    }
+
+    /* 宝石分解底部留白 */
+    #tab-gems {
+        padding-bottom: 120px;
     }
 }
     </style>
@@ -1077,8 +1086,8 @@ function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
     ws = new WebSocket(`${protocol}${location.host}/ws`);
     ws.onopen = () => { console.log("WebSocket 已连接"); ws.send(JSON.stringify({ act: "login", uid: currentUser })); };
-    ws.onerror = (err) => { console.error("WebSocket 错误", err); addLog("❌ 聊天服务器连接失败，5秒后重试", "red"); setTimeout(connectWebSocket, 5000); };
-    ws.onclose = () => { console.log("WebSocket 关闭，尝试重连..."); setTimeout(connectWebSocket, 5000); };
+    ws.onerror = (err) => { console.error("WebSocket 错误", err); addLog("❌ 聊天服务器连接失败，5秒后重试", "red"); setTimeout(connectWebSocket, 30000); };
+    ws.onclose = () => { console.log("WebSocket 关闭，尝试重连..."); setTimeout(connectWebSocket, 30000); };
     ws.onmessage = (e) => {
         let data = JSON.parse(e.data);
         if (data.type === "login_ok") console.log("登录成功");

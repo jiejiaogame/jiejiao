@@ -204,6 +204,7 @@ def get_html():
     #blessingTimer {
         display: none !important;
     }
+
     .main-content {
         margin-top: 0;
         padding: 8px 8px 80px 8px;
@@ -221,6 +222,7 @@ def get_html():
         font-size: 11px;
         padding: 3px 10px;
     }
+
     .formation-area {
         width: 100%;
     }
@@ -263,6 +265,7 @@ def get_html():
     .formation-hero-name {
         font-size: 8px;
     }
+
     .map-container {
         width: 100%;
         overflow-x: auto;
@@ -285,6 +288,7 @@ def get_html():
     .node-power, .node-reward {
         font-size: 9px;
     }
+
     .gem-grid {
         transform: scale(0.9);
         transform-origin: top center;
@@ -297,6 +301,7 @@ def get_html():
     .gem-card strong {
         font-size: 9px;
     }
+
     .city-layout {
         flex-direction: column;
         gap: 10px;
@@ -313,6 +318,8 @@ def get_html():
         padding: 2px 6px;
         font-size: 9px;
     }
+
+    /* ========== 战斗画面（手机版） ========== */
     .battle-panel {
         overflow-y: auto;
         justify-content: flex-start;
@@ -374,13 +381,14 @@ def get_html():
         overflow-x: visible;
         min-height: auto;
     }
+    /* 我方阵营 - 不下移，紧贴上方 */
     .grid-container.left-grid-container {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         margin-left: 0;
-        margin-top: 30px;
+        margin-top: 0px;
     }
     .left-grid-container .grid-title {
         font-size: 12px;
@@ -396,13 +404,14 @@ def get_html():
         transform: scale(0.85);
         transform-origin: top left;
     }
+    /* 敌方阵营 - 上移，使两阵之间只隔一人高 */
     .grid-container.right-grid-container {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         margin-right: 0;
-        margin-top: -60px;
+        margin-top: -140px;
         margin-bottom: 0;
     }
     .right-grid-container .grid-title {
@@ -513,6 +522,7 @@ def get_html():
     .enemy-hp {
         font-size: 8px;
     }
+
     .log-panel {
         width: calc(100% - 20px);
         right: 10px;
@@ -540,6 +550,7 @@ def get_html():
         padding: 2px 8px;
         font-size: 11px;
     }
+
     #recruitShopModal .modal-content {
         width: 90vw;
         max-width: 90vw;
@@ -575,6 +586,7 @@ def get_html():
         margin-top: 10px;
         padding-top: 8px;
     }
+
     .friend-panel {
         width: 90vw;
         left: 5vw;

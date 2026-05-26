@@ -938,30 +938,33 @@ def get_html():
         z-index: 10015;
         padding: 2px 8px;
     }
-    /* 保留战斗面板底部的控制按钮（电脑版相同） */
+    /* ========== 战斗按钮：居中，上移对齐敌方九宫格下沿 ========== */
     .controls {
         position: relative;
         z-index: 10003;
-        margin-bottom: 70px;
-        background: rgba(0,0,0,0.8);
-        padding: 10px;
-        gap: 20px;
-        margin-top: 15px;
-        display: flex;
-        justify-content: center;
-        border-radius: 30px;
+        margin-top: -50px;          /* 上移使按钮靠近敌方阵营下沿 */
+        margin-bottom: 20px;        /* 给日志面板留出空间 */
         width: fit-content;
         margin-left: auto;
         margin-right: auto;
+        background: rgba(0,0,0,0.8);
+        padding: 8px 16px;
+        gap: 15px;
+        display: flex;
+        justify-content: center;
+        border-radius: 40px;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 0 8px rgba(0,0,0,0.5);
     }
     .controls button {
-        padding: 6px 20px;
-        font-size: 14px;
+        padding: 5px 18px;
+        font-size: 13px;
         background: #d99e3e;
         color: #1e2a2e;
         border: none;
         border-radius: 40px;
         font-weight: bold;
+        cursor: pointer;
     }
     .enemy-avatars {
         top: 5px;

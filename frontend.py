@@ -806,7 +806,7 @@ def get_html():
         -webkit-overflow-scrolling: touch;
     }
 
-    /* 血量条区域 - 确保不被背景遮住，提高层级 */
+    /* 血量条区域 - 确保不被背景遮住 */
     .health-bars {
         position: relative;
         z-index: 30;
@@ -878,7 +878,7 @@ def get_html():
         text-align: left;
         margin-left: 10px;
         margin-bottom: 5px;
-        transform: translateY(-8px); /* 标题上移，避免与血量条重叠 */
+        transform: translateY(-8px);
         color: gold;
         font-weight: bold;
         text-shadow: 0 0 2px black;
@@ -903,7 +903,7 @@ def get_html():
         text-align: right;
         margin-right: 10px;
         margin-bottom: 5px;
-        transform: translateY(-8px); /* 标题上移，避免与血量条重叠 */
+        transform: translateY(-8px);
         color: gold;
         font-weight: bold;
         text-shadow: 0 0 2px black;
@@ -960,32 +960,519 @@ def get_html():
         padding: 2px 8px;
     }
 
-    /* 战斗按钮：靠左对齐，位于敌方九宫格中间高度 */
+    /* ========== 战斗按钮：只显示逃跑，靠左边缘对齐，不遮挡九宫格 ========== */
     .controls {
         position: relative;
         z-index: 10003;
-        margin-top: -110px;          /* 垂直上移到敌方九宫格中间区域 */
-        margin-left: 10px;           /* 靠左对齐 */
+        margin-top: -110px;          /* 垂直位置：敌方九宫格中间高度 */
+        margin-left: 5px;            /* 靠左边缘对齐，几乎贴近左边框 */
         margin-right: auto;
         width: fit-content;
-        background: rgba(0,0,0,0.8);
-        padding: 6px 12px;
-        gap: 12px;
-        display: flex;
-        justify-content: flex-start;
-        border-radius: 40px;
+        background: rgba(0,0,0,0.7);
+        padding: 4px 10px;
+        border-radius: 30px;
         backdrop-filter: blur(4px);
-        box-shadow: 0 0 8px rgba(0,0,0,0.5);
+        box-shadow: 0 0 6px rgba(0,0,0,0.5);
     }
-    .controls button {
+    /* 隐藏跳过按钮 */
+    .controls .skip-btn {
+        display: none;
+    }
+    /* 仅保留逃跑按钮，适当缩小尺寸 */
+    .controls .escape-btn {
+        display: inline-block;
         padding: 4px 16px;
         font-size: 13px;
-        background: #d99e3e;
-        color: #1e2a2e;
+        background: #8b3c2c;
+        color: white;
         border: none;
-        border-radius: 40px;
+        border-radius: 30px;
         font-weight: bold;
         cursor: pointer;
+    }
+    /* 防止其他可能的额外按钮出现 */
+    .controls button:not(.escape-btn) {
+        display: none;
+    }
+
+    .enemy-avatars {
+        top: 5px;
+        right: 5px;
+        padding: 2px 5px;
+        background: rgba(0,0,0,0.5);
+        border-radius: 20px;
+        z-index: 25;
+    }
+    .enemy-avatar-item {
+        width: 30px;
+    }
+    .enemy-avatar-item img {
+        width: 24px;
+        height: 24px;
+    }
+    .enemy-hp {
+        font-size: 8px;
+    }
+
+    /* ========== 日志栏 ========== */
+    .log-panel {
+        width: calc(100% - 20px);
+        right: 10px;
+        bottom: 10px;
+        left: 10px;
+        margin: 0;
+        z-index: 10002;
+    }
+    .log-header {
+        font-size: 11px;
+        padding: 3px;
+    }
+    .log-content {
+        height: 120px;
+        font-size: 10px;
+    }
+    .log-content p {
+        color: #ffaa66;
+    }
+    .log-input input {
+        font-size: 11px;
+        padding: 4px;
+    }
+    .log-input button {
+        padding: 2px 8px;
+        font-size: 11px;
+    }
+
+    /* ========== 万仙殿模态框缩小 ========== */
+    #recruitShopModal .modal-content {
+        width: 90vw;
+        max-width: 90vw;
+        max-height: 85vh;
+        padding: 8px;
+    }
+    #recruitShopModal .hero-grid {
+        gap: 6px;
+        max-height: 45vh;
+        overflow-y: auto;
+    }
+    #recruitShopModal .recruit-card {
+        width: 90px;
+        padding: 4px;
+    }
+    #recruitShopModal .recruit-card img {
+        width: 60px;
+        height: 60px;
+    }
+    #recruitShopModal .recruit-card button {
+        font-size: 9px;
+        padding: 2px 5px;
+    }
+    #recruitShopModal .pray-buttons {
+        gap: 6px;
+    }
+    #recruitShopModal .pray-btn {
+        width: 60px;
+        padding: 3px 5px;
+        font-size: 9px;
+    }
+    #recruitShopModal .pray-panel-in-modal {
+        margin-top: 10px;
+        padding-top: 8px;
+    }
+
+    /* ========== 其他 ========== */
+    .friend-panel {
+        width: 90vw;
+        left: 5vw;
+        top: 60px;
+    }
+    .modal-content {
+        width: 95vw;
+        max-width: 95vw;
+    }
+    .hero-card {
+        width: 105px;
+    }
+    .pray-btn {
+        width: 70px;
+@media (max-width: 768px) {
+    /* ========== 顶部栏：紧凑两行布局 ========== */
+    .top-bar {
+        position: relative;
+        top: 0;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        gap: 6px;
+        border-radius: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(12px);
+        padding: 6px 10px;
+        margin-bottom: 8px;
+    }
+    .user-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    .user-name {
+        font-size: 12px;
+    }
+    .user-resources {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .resource-item {
+        font-size: 10px;
+        padding: 2px 5px;
+    }
+    .music-control {
+        padding: 2px 5px;
+        gap: 3px;
+    }
+    .music-control input {
+        width: 50px;
+    }
+    .top-buttons {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin: 0;
+    }
+    .top-buttons button {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    .user-info, .user-resources, .top-buttons {
+        margin: 0;
+    }
+
+    /* ========== 主内容区域 ========== */
+    .main-content {
+        margin-top: 0;
+        padding: 8px 8px 80px 8px;
+        overflow-y: auto;
+        height: calc(100vh - 110px);
+    }
+
+    /* 标签页按钮行 */
+    .tab-bar {
+        gap: 6px;
+        padding: 4px;
+        margin-bottom: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .tab-btn {
+        font-size: 11px;
+        padding: 3px 10px;
+    }
+
+    /* ========== 演武场 ========== */
+    .formation-area {
+        width: 100%;
+    }
+    .formation-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        margin-bottom: 12px;
+    }
+    .formation-header label {
+        font-size: 12px;
+    }
+    .formation-select {
+        font-size: 12px;
+        padding: 3px 10px;
+        width: 100%;
+    }
+    .formation-header button {
+        font-size: 11px;
+        padding: 4px 8px;
+        margin: 2px 0;
+    }
+    .formation-grid {
+        width: 100%;
+        gap: 6px;
+        padding: 10px;
+        transform: scale(0.85);
+        transform-origin: top center;
+        margin-bottom: 10px;
+    }
+    .formation-slot {
+        width: auto;
+        height: auto;
+        min-height: 70px;
+    }
+    .formation-hero img {
+        width: 35px;
+        height: 35px;
+    }
+    .formation-hero-name {
+        font-size: 8px;
+    }
+
+    /* ========== 副本节点 ========== */
+    .map-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+    .node-chain {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        gap: 6px;
+        padding-bottom: 8px;
+    }
+    .node-card {
+        width: 95px;
+        padding: 6px;
+        flex-shrink: 0;
+    }
+    .node-name {
+        font-size: 11px;
+    }
+    .node-power, .node-reward {
+        font-size: 9px;
+    }
+
+    /* ========== 宝石区域 ========== */
+    .gem-grid {
+        transform: scale(0.9);
+        transform-origin: top center;
+        gap: 8px;
+    }
+    .gem-card {
+        width: 70px;
+        padding: 4px;
+    }
+    .gem-card strong {
+        font-size: 9px;
+    }
+
+    /* ========== 碧游宫 ========== */
+    .city-layout {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .city-column {
+        width: 100%;
+        padding: 8px;
+    }
+    .branch-card {
+        padding: 5px;
+        gap: 5px;
+    }
+    .branch-card button {
+        padding: 2px 6px;
+        font-size: 9px;
+    }
+
+    /* ========== 战斗画面（手机版专用） ========== */
+    .battle-panel {
+        overflow-y: auto;
+        justify-content: flex-start;
+        padding: 5px 5px 120px 5px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* 血量条区域 - 确保不被背景遮住 */
+    .health-bars {
+        position: relative;
+        z-index: 30;
+        padding: 8px 12px;
+        flex-direction: row;
+        gap: 20px;
+        background: rgba(0, 0, 0, 0.85);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        justify-content: center;
+        border: 1px solid gold;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .team-health {
+        font-size: 12px;
+        flex: 1;
+        text-align: center;
+        max-width: 160px;
+        background: rgba(30, 40, 30, 0.95);
+        border-radius: 10px;
+        padding: 5px 8px;
+        border: 1px solid #d99e3e;
+        color: #ffd966;
+        font-weight: bold;
+        text-shadow: 0 0 2px #000;
+    }
+    .team-health .total-bar {
+        width: 100%;
+        height: 8px;
+        background: #3a2a2a;
+        border-radius: 4px;
+        margin-top: 4px;
+        overflow: hidden;
+    }
+    .team-health .total-fill {
+        height: 100%;
+        background: #5cb85c;
+        transition: width 0.2s;
+    }
+    .power-value {
+        font-size: 10px;
+        padding: 2px 6px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 20px;
+        color: #ffaa66;
+    }
+
+    .battlefield {
+        padding: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        overflow-x: visible;
+        min-height: auto;
+    }
+
+    /* 我方阵营 - 下移半个人距离 */
+    .grid-container.left-grid-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-left: 0;
+        margin-top: 30px;
+    }
+    .left-grid-container .grid-title {
+        font-size: 12px;
+        text-align: left;
+        margin-left: 10px;
+        margin-bottom: 5px;
+        transform: translateY(-8px);
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 2px black;
+    }
+    .left-grid-container .grid-3x3 {
+        transform: scale(0.85);
+        transform-origin: top left;
+    }
+
+    /* 敌方阵营 - 上移一个人距离 */
+    .grid-container.right-grid-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        margin-right: 0;
+        margin-top: -60px;
+        margin-bottom: 0;
+    }
+    .right-grid-container .grid-title {
+        font-size: 12px;
+        text-align: right;
+        margin-right: 10px;
+        margin-bottom: 5px;
+        transform: translateY(-8px);
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 2px black;
+    }
+    .right-grid-container .grid-3x3 {
+        transform: scale(0.85);
+        transform-origin: top right;
+    }
+
+    .grid-slot {
+        width: 60px;
+        height: 80px;
+    }
+    .hero-avatar-mini {
+        max-width: 130%;
+        max-height: 130%;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .right-grid .hero-avatar-mini {
+        transform: translateX(-50%) scaleX(-1);
+    }
+    .hero-name-mini {
+        bottom: 18px;
+        font-size: 7px;
+    }
+    .hero-hp-mini {
+        bottom: 2px;
+        font-size: 6px;
+    }
+    .grid-row-1 {
+        margin-bottom: -12px;
+    }
+    .grid-row-2 {
+        margin-bottom: -12px;
+    }
+    .skill-video-placeholder {
+        width: 180px;
+        height: 101px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10300;
+    }
+    .skill-name-display {
+        font-size: 12px;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        white-space: nowrap;
+        z-index: 10015;
+        padding: 2px 8px;
+    }
+
+    /* ========== 战斗按钮：只显示逃跑，靠左边缘对齐，不遮挡九宫格 ========== */
+    .controls {
+        position: relative;
+        z-index: 10003;
+        margin-top: -110px;          /* 垂直位置：敌方九宫格中间高度 */
+        margin-left: 5px;            /* 靠左边缘对齐，几乎贴近左边框 */
+        margin-right: auto;
+        width: fit-content;
+        background: rgba(0,0,0,0.7);
+        padding: 4px 10px;
+        border-radius: 30px;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 0 6px rgba(0,0,0,0.5);
+    }
+    /* 隐藏跳过按钮 */
+    .controls .skip-btn {
+        display: none;
+    }
+    /* 仅保留逃跑按钮，适当缩小尺寸 */
+    .controls .escape-btn {
+        display: inline-block;
+        padding: 4px 16px;
+        font-size: 13px;
+        background: #8b3c2c;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    /* 防止其他可能的额外按钮出现 */
+    .controls button:not(.escape-btn) {
+        display: none;
     }
 
     .enemy-avatars {
@@ -2128,9 +2615,28 @@ async function openMyHeroes() {
     if (!cont) { console.error("myHeroesList 元素不存在"); return; }
     cont.innerHTML = ''; 
     for (let h of d.heroes) { 
+        // 获取该武将的技能名称（通过 hero_detail 接口）
+        let skillName = '未知技能';
+        try {
+            let detailResp = await fetch(`/hero_detail?username=${currentUser}&hero=${h.name}`);
+            let detail = await detailResp.json();
+            if (detail.success && detail.skill_name) {
+                skillName = detail.skill_name;
+            }
+        } catch(e) { console.warn(e); }
+        
         let div = document.createElement('div'); 
         div.className = 'hero-card'; 
-        div.innerHTML = `<img src="/static/images/heroes/${h.id}.png" onerror="this.src='/static/images/heroes/hero.png'"><div>${h.name}</div><div>Lv.${h.level} ★${h.star}</div><div><button onclick="showHeroDetail('${h.name}')">详情</button><button onclick="dismissHero('${h.name}')">遣散</button></div>`; 
+        div.innerHTML = `
+            <img src="/static/images/heroes/${h.id}.png" onerror="this.src='/static/images/heroes/hero.png'">
+            <div><strong>${h.name}</strong></div>
+            <div>Lv.${h.level} ★${h.star}</div>
+            <div style="font-size: 11px; color: #ffaa66;">✨ ${skillName}</div>
+            <div>
+                <button onclick="showHeroDetail('${h.name}')">详情</button>
+                <button onclick="dismissHero('${h.name}')">遣散</button>
+            </div>
+        `; 
         cont.appendChild(div); 
     } 
     let modal = document.getElementById('myHeroesModal');

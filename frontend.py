@@ -118,6 +118,29 @@ def get_html():
         #preloadProgressBar { position: fixed; top: 70px; left: 0; width: 100%; height: 4px; background: rgba(0,0,0,0.5); z-index: 10004; display: none; }
         #preloadProgressFill { width: 0%; height: 100%; background: linear-gradient(90deg, #d99e3e, gold); transition: width 0.3s; }
         
+        /* ========== 头像卡片样式 ========== */
+        .avatar-card {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            background: #2c3e2f;
+            border: 2px solid transparent;
+            transition: transform 0.1s, border-color 0.1s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .avatar-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .avatar-card:hover {
+            transform: scale(1.05);
+            border-color: gold;
+        }
+        
         /* ========== 手机版适配（宽度 ≤ 768px） ========== */
 @media (max-width: 768px) {
     /* ========== 顶部栏：两行布局 ========== */
@@ -209,12 +232,15 @@ def get_html():
         display: none !important;
     }
 
+    /* ========== 主内容区域 ========== */
     .main-content {
         margin-top: 0;
         padding: 8px 8px 80px 8px;
         overflow-y: auto;
         height: calc(100vh - 110px);
     }
+
+    /* 标签页按钮行 */
     .tab-bar {
         gap: 6px;
         padding: 4px;
@@ -227,6 +253,7 @@ def get_html():
         padding: 3px 10px;
     }
 
+    /* ========== 演武场 ========== */
     .formation-area {
         width: 100%;
     }
@@ -270,6 +297,7 @@ def get_html():
         font-size: 8px;
     }
 
+    /* ========== 副本节点 ========== */
     .map-container {
         width: 100%;
         overflow-x: auto;
@@ -293,6 +321,7 @@ def get_html():
         font-size: 9px;
     }
 
+    /* ========== 宝石区域 ========== */
     .gem-grid {
         transform: scale(0.9);
         transform-origin: top center;
@@ -306,6 +335,7 @@ def get_html():
         font-size: 9px;
     }
 
+    /* ========== 碧游宫 ========== */
     .city-layout {
         flex-direction: column;
         gap: 10px;
@@ -323,93 +353,85 @@ def get_html():
         font-size: 9px;
     }
 
-    /* ========== 战斗画面 - 紧凑布局，左右贴边，底部留白 ========== */
+    /* ========== 战斗画面 - 无缝贴边 + 紧凑垂直间距 ========== */
     .battle-panel {
         overflow-y: auto;
-        padding: 10px 5px 180px 5px;
+        justify-content: flex-start;
+        padding: 5px 5px 140px 5px;
         -webkit-overflow-scrolling: touch;
     }
     .health-bars {
+        padding: 5px 8px;
+        flex-direction: row;
+        gap: 15px;
         position: sticky;
         top: 0;
-        z-index: 30;
-        padding: 8px 12px;
-        flex-direction: row;
-        gap: 20px;
-        background: rgba(0, 0, 0, 0.85);
-        border-radius: 12px;
-        margin-bottom: 15px;
+        background: rgba(0,0,0,0.7);
+        z-index: 10;
+        border-radius: 10px;
+        margin-bottom: 10px;
         justify-content: center;
-        border: 1px solid gold;
-        backdrop-filter: blur(4px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
     .team-health {
-        font-size: 12px;
+        font-size: 10px;
         flex: 1;
         text-align: center;
-        max-width: 160px;
-        background: rgba(30, 40, 30, 0.95);
-        border-radius: 10px;
-        padding: 5px 8px;
-        border: 1px solid #d99e3e;
-        color: #ffd966;
-        font-weight: bold;
-        text-shadow: 0 0 2px #000;
+        max-width: 150px;
     }
     .team-health .total-bar {
         width: 100%;
-        height: 8px;
-        background: #3a2a2a;
-        border-radius: 4px;
-        margin-top: 4px;
-        overflow: hidden;
-    }
-    .team-health .total-fill {
-        height: 100%;
-        background: #5cb85c;
-        transition: width 0.2s;
+        height: 6px;
     }
     .power-value {
-        font-size: 10px;
-        padding: 2px 6px;
-        background: rgba(0, 0, 0, 0.7);
-        border-radius: 20px;
-        color: #ffaa66;
+        font-size: 9px;
+        padding: 1px 4px;
     }
     .battlefield {
+        padding: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        overflow-x: visible;
+        min-height: auto;
+    }
+    /* 我方阵营 - 下移30px */
+    .grid-container.left-grid-container {
+        width: 100%;
         display: flex;
         flex-direction: column;
-        align-items: stretch;
-        gap: 20px;
-    }
-    .grid-container.left-grid-container,
-    .grid-container.right-grid-container {
-        position: static;
-        margin: 0;
-        width: 100%;
+        align-items: flex-start;
+        margin-left: 0;
+        margin-top: 30px;
     }
     .left-grid-container .grid-title {
         font-size: 12px;
         text-align: left;
-        margin: 0 0 5px 10px;
-        color: gold;
-        font-weight: bold;
-        text-shadow: 0 0 2px black;
-    }
-    .right-grid-container .grid-title {
-        font-size: 12px;
-        text-align: right;
-        margin: 0 10px 5px 0;
-        color: gold;
-        font-weight: bold;
-        text-shadow: 0 0 2px black;
+        margin-left: 10px;
+        margin-bottom: 5px;
+        transform: translateX(6%);   /* 向右移动，抵消缩放空白，使标题与九宫格边缘对齐 */
     }
     .left-grid-container .grid-3x3 {
         transform: scale(0.85);
         transform-origin: top left;
         width: 117%;
         margin-left: -8%;
+    }
+    /* 敌方阵营 - 上移10px */
+    .grid-container.right-grid-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        margin-right: 0;
+        margin-top: -10px;
+        margin-bottom: 15px;
+    }
+    .right-grid-container .grid-title {
+        font-size: 12px;
+        text-align: right;
+        margin-right: 10px;
+        margin-bottom: 5px;
+        transform: translateX(-6%);  /* 向左移动，抵消缩放空白，使标题与九宫格边缘对齐 */
     }
     .right-grid-container .grid-3x3 {
         transform: scale(0.85);
@@ -463,26 +485,25 @@ def get_html():
         z-index: 10015;
         padding: 2px 8px;
     }
-    /* 逃跑按钮：固定在左下角，避免与聊天输入框冲突 */
+    /* 逃跑按钮：sticky 底部居中，透明背景 */
     .controls {
-        position: fixed;
-        bottom: 80px;
-        left: 10px;
-        z-index: 10003;
-        margin: 0;
-        background: rgba(0,0,0,0.7);
-        padding: 4px 10px;
-        border-radius: 30px;
-        backdrop-filter: blur(4px);
-        box-shadow: 0 0 6px rgba(0,0,0,0.5);
+        position: sticky;
+        bottom: 0;
+        background: transparent;
+        padding: 8px;
+        gap: 20px;
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        z-index: 20;
     }
     .controls .skip-btn {
         display: none;
     }
     .controls .escape-btn {
         display: inline-block;
-        padding: 4px 16px;
-        font-size: 13px;
+        padding: 4px 15px;
+        font-size: 12px;
         background: #8b3c2c;
         color: white;
         border: none;
@@ -512,13 +533,14 @@ def get_html():
         font-size: 8px;
     }
 
+    /* ========== 日志栏 ========== */
     .log-panel {
         width: calc(100% - 20px);
         right: 10px;
         bottom: 10px;
         left: 10px;
         margin: 0;
-        z-index: 10002;
+        z-index: 10005;
     }
     .log-header {
         font-size: 11px;
@@ -540,6 +562,7 @@ def get_html():
         font-size: 11px;
     }
 
+    /* ========== 万仙殿模态框缩小 ========== */
     #recruitShopModal .modal-content {
         width: 90vw;
         max-width: 90vw;
@@ -576,6 +599,7 @@ def get_html():
         padding-top: 8px;
     }
 
+    /* ========== 其他 ========== */
     .friend-panel {
         width: 90vw;
         left: 5vw;
@@ -629,7 +653,6 @@ def get_html():
             <button onclick="logout()">🚪 注销</button>
         </div>
     </div>
-
     <div class="main-content" id="mainContent">
         <div class="tab-bar">
             <button class="tab-btn active" data-tab="map">🗺️ 仙岛</button>
@@ -988,7 +1011,7 @@ async function showPowerRank() {
     let data = await resp.json();
     if (data.success) {
         let rankHtml = '<table class="rank-table"><tr><th>排名</th><th>玩家</th><th>战力</th></tr>';
-        data.rank.forEach((item, idx) => { rankHtml += `<tr><td>${idx+1}</td><td>${item.username}</td><td>${item.power}</tr></tr>`; });
+        data.rank.forEach((item, idx) => { rankHtml += `<tr><td>${idx+1}</td><td>${item.username}</td><td>${item.power}</td></tr>`; });
         rankHtml += '</table>';
         document.getElementById('rankList').innerHTML = rankHtml;
         document.getElementById('myRankInfo').innerHTML = `我的战力: ${data.my_power || 0} &nbsp; 排名: ${data.my_rank || '未上榜'}`;
@@ -1369,8 +1392,31 @@ async function loadBlacklist() { let r = await fetch(`/api/blacklist?username=${
 async function removeFromBlacklist(name) { let r = await fetch('/api/blacklist/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, target: name }) }); let d = await r.json(); if (d.success) { addLog(`已将 ${name} 移出黑名单`); await loadBlacklist(); await loadFriendList(); } else alert(d.msg); }
 
 // ========== 头像 ==========
-async function showAvatarModal() { let r = await fetch('/avatar_list?t=' + Date.now()); let d = await r.json(); let cont = document.getElementById('avatarList'); cont.innerHTML = ''; for (let av of d.avatars) { let div = document.createElement('div'); div.className = 'recruit-card'; div.innerHTML = `<img src="/static/images/avatars/${av}" style="width:60px;" onerror="this.parentElement.remove()"><div>${av}</div>`; div.onclick = () => selectAvatar(av); cont.appendChild(div); } document.getElementById('avatarModal').style.display = 'flex'; }
-async function selectAvatar(avatar) { let r = await fetch('/update_avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, avatar: avatar }) }); let d = await r.json(); if (d.success) { document.getElementById('userAvatar').src = `/static/images/avatars/${avatar}`; closeAvatarModal(); setSelfInfo(); addLog("👤 头像已更换"); } }
+// 修改后的头像选择模态框：只显示图片，无文件名，方形铺满，美观
+async function showAvatarModal() { 
+    let r = await fetch('/avatar_list?t=' + Date.now()); 
+    let d = await r.json(); 
+    let cont = document.getElementById('avatarList'); 
+    cont.innerHTML = ''; 
+    for (let av of d.avatars) { 
+        let div = document.createElement('div'); 
+        div.className = 'avatar-card'; 
+        div.innerHTML = `<img src="/static/images/avatars/${av}" onerror="this.parentElement.remove()">`; 
+        div.onclick = () => selectAvatar(av); 
+        cont.appendChild(div); 
+    } 
+    document.getElementById('avatarModal').style.display = 'flex'; 
+}
+async function selectAvatar(avatar) { 
+    let r = await fetch('/update_avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, avatar: avatar }) }); 
+    let d = await r.json(); 
+    if (d.success) { 
+        document.getElementById('userAvatar').src = `/static/images/avatars/${avatar}`; 
+        closeAvatarModal(); 
+        setSelfInfo(); 
+        addLog("👤 头像已更换"); 
+    } 
+}
 function closeAvatarModal() { document.getElementById('avatarModal').style.display = 'none'; }
 
 function logout() { if (confirm("确定注销？")) { if (branchTimer) clearInterval(branchTimer); localStorage.removeItem('jijiao_user'); location.reload(); } }

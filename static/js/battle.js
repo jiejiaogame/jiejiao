@@ -1,4 +1,4 @@
-// static/js/battle.js - 添加音效预加载功能
+// static/js/battle.js - 完整修复版（所有技能伤害日志均显示）
 let leftTeam = [], rightTeam = [];
 let originalLeftTeam = [], originalRightTeam = [];
 window.isFighting = false;
@@ -9,50 +9,36 @@ let battleWinner = null;
 
 // ========== 音效预加载缓存 ==========
 let audioContext = null;
-const soundCache = new Map();  // 存储已解码的 AudioBuffer
+const soundCache = new Map();
 let preloadProgress = { loaded: 0, total: 0 };
 let preloadComplete = false;
 let preloadPromise = null;
 
-// 获取或创建 AudioContext（用户交互后解锁）
 function getAudioContext() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
     return audioContext;
 }
 
-// 预加载音效：传入 URL 数组，返回 Promise
 async function preloadSounds(urls, onProgress) {
     const ctx = getAudioContext();
-    // 如果 AudioContext 是挂起状态，等待用户交互后再继续（但我们可以先 fetch 数组，不解码）
-    // 为了兼容自动播放策略，先 fetch 数据，暂不解码，等播放时再解码或提前解码但需要用户交互
-    // 最佳做法：在用户首次点击页面任意位置时，初始化 AudioContext 并开始预加载解码
     const toLoad = urls.filter(url => !soundCache.has(url));
     preloadProgress.total = toLoad.length;
     preloadProgress.loaded = 0;
-    
     const fetchPromises = toLoad.map(async (url) => {
         try {
             const response = await fetch(url);
             const arrayBuffer = await response.arrayBuffer();
-            // 暂存 arrayBuffer，等 AudioContext 激活后再解码
             soundCache.set(url, { arrayBuffer, decoded: false, buffer: null });
             preloadProgress.loaded++;
             if (onProgress) onProgress(preloadProgress.loaded, preloadProgress.total);
-        } catch (e) {
-            console.warn(`预加载音效失败: ${url}`, e);
-        }
+        } catch (e) { console.warn(`预加载音效失败: ${url}`, e); }
     });
     await Promise.all(fetchPromises);
 }
 
-// 解码所有已预加载的音效（需要在用户交互后调用）
 async function decodeAllSounds() {
     const ctx = getAudioContext();
-    if (ctx.state === 'suspended') {
-        await ctx.resume();
-    }
+    if (ctx.state === 'suspended') await ctx.resume();
     const entries = Array.from(soundCache.entries());
     for (const [url, item] of entries) {
         if (!item.decoded && item.arrayBuffer) {
@@ -60,21 +46,16 @@ async function decodeAllSounds() {
                 const buffer = await ctx.decodeAudioData(item.arrayBuffer.slice(0));
                 item.buffer = buffer;
                 item.decoded = true;
-                delete item.arrayBuffer; // 释放内存
-            } catch (e) {
-                console.warn(`解码音效失败: ${url}`, e);
-            }
+                delete item.arrayBuffer;
+            } catch (e) { console.warn(`解码音效失败: ${url}`, e); }
         }
     }
 }
 
-// 播放音效（从缓存中取）
 function playSound(url, volume = 0.5) {
     if (!url) return;
     const ctx = getAudioContext();
     const cached = soundCache.get(url);
-    
-    // 如果已解码，直接播放
     if (cached && cached.decoded && cached.buffer) {
         const source = ctx.createBufferSource();
         source.buffer = cached.buffer;
@@ -85,16 +66,10 @@ function playSound(url, volume = 0.5) {
         source.start();
         return;
     }
-    
-    // 降级方案：实时下载并播放
-    if (ctx.state === 'suspended') {
-        ctx.resume().catch(e => console.warn);
-    }
-    fetch(url)
-        .then(res => res.arrayBuffer())
+    if (ctx.state === 'suspended') ctx.resume().catch(e => console.warn);
+    fetch(url).then(res => res.arrayBuffer())
         .then(buffer => ctx.decodeAudioData(buffer))
         .then(decoded => {
-            // 缓存起来供下次使用
             soundCache.set(url, { decoded: true, buffer: decoded });
             const source = ctx.createBufferSource();
             source.buffer = decoded;
@@ -103,28 +78,20 @@ function playSound(url, volume = 0.5) {
             source.connect(gainNode);
             gainNode.connect(ctx.destination);
             source.start();
-        })
-        .catch(e => console.warn("音效加载失败:", url, e));
+        }).catch(e => console.warn("音效加载失败:", url, e));
 }
 
-// 获取所有需要预加载的音效 URL（武将音效 + 通用音效）
 async function getAllSoundUrls() {
-    // 获取所有武将 ID 列表
     const heroIds = new Set();
     const allHeroes = await fetch(`/my_heroes?username=${currentUser}`).then(r => r.json()).catch(() => ({ heroes: [] }));
-    if (allHeroes.heroes) {
-        allHeroes.heroes.forEach(h => heroIds.add(h.id));
-    }
-    // 添加常用武将（即使未拥有也可能出现在战斗中）
+    if (allHeroes.heroes) allHeroes.heroes.forEach(h => heroIds.add(h.id));
     const commonIds = ['duobao', 'jinling', 'yunxiao', 'zhaogongming', 'daji', 'jiangziya'];
     commonIds.forEach(id => heroIds.add(id));
-    
     const urls = [];
     for (const id of heroIds) {
         urls.push(`/static/sounds/heroes/${id}_attack.wav`);
         urls.push(`/static/sounds/heroes/${id}_hit.wav`);
     }
-    // 通用音效
     const commonSounds = [
         '/static/sounds/attack_physical.wav',
         '/static/sounds/attack_magic.wav',
@@ -134,40 +101,32 @@ async function getAllSoundUrls() {
         '/static/sounds/defeat.wav'
     ];
     urls.push(...commonSounds);
-    return [...new Set(urls)]; // 去重
+    return [...new Set(urls)];
 }
 
-// 开始预加载（在用户登录后调用）
 async function startPreload(onProgress) {
     if (preloadPromise) return preloadPromise;
     const urls = await getAllSoundUrls();
     preloadPromise = preloadSounds(urls, onProgress);
     await preloadPromise;
-    // 注意：不解码，等用户首次交互时再解码（避免自动播放策略）
     preloadComplete = true;
     return preloadPromise;
 }
 
-// 用户首次交互时调用（点击页面任意位置），解码所有音效
 async function unlockAndDecodeSounds() {
     const ctx = getAudioContext();
-    if (ctx.state === 'suspended') {
-        await ctx.resume();
-    }
+    if (ctx.state === 'suspended') await ctx.resume();
     await decodeAllSounds();
     console.log('音效解码完成，已就绪');
 }
 
-// 检查战斗所需音效是否已解码（可选，可跳过直接播放）
 async function ensureBattleSoundsReady(attackerId, targetId) {
     const neededUrls = [
         `/static/sounds/heroes/${attackerId}_attack.wav`,
         `/static/sounds/heroes/${targetId}_hit.wav`
     ];
     const ctx = getAudioContext();
-    if (ctx.state === 'suspended') {
-        await ctx.resume();
-    }
+    if (ctx.state === 'suspended') await ctx.resume();
     for (const url of neededUrls) {
         const cached = soundCache.get(url);
         if (cached && !cached.decoded && cached.arrayBuffer) {
@@ -176,9 +135,7 @@ async function ensureBattleSoundsReady(attackerId, targetId) {
                 cached.buffer = buffer;
                 cached.decoded = true;
                 delete cached.arrayBuffer;
-            } catch (e) {
-                console.warn(`解码失败: ${url}`, e);
-            }
+            } catch (e) { console.warn(`解码失败: ${url}`, e); }
         }
     }
 }
@@ -290,10 +247,7 @@ function getHeroId(heroName, heroObj) {
 
 let currentSkillNameElement = null;
 function showSkillName(skillName, duration = 2000) {
-    if (currentSkillNameElement) {
-        currentSkillNameElement.remove();
-        currentSkillNameElement = null;
-    }
+    if (currentSkillNameElement) currentSkillNameElement.remove();
     let container = document.getElementById('battlePanel');
     if (!container) return;
     let div = document.createElement('div');
@@ -301,12 +255,7 @@ function showSkillName(skillName, duration = 2000) {
     div.innerText = skillName;
     container.appendChild(div);
     currentSkillNameElement = div;
-    setTimeout(() => {
-        if (div && div.parentNode) {
-            div.remove();
-            if (currentSkillNameElement === div) currentSkillNameElement = null;
-        }
-    }, duration);
+    setTimeout(() => { if (div && div.parentNode) div.remove(); if (currentSkillNameElement === div) currentSkillNameElement = null; }, duration);
 }
 
 function showDamageNumber(targetElement, damage, isHeal = false) {
@@ -324,14 +273,12 @@ function showDamageNumber(targetElement, damage, isHeal = false) {
     setTimeout(() => div.remove(), 800);
 }
 
-// ========== 状态图标（使用 Emoji + 文字，持续5秒） ==========
 function showStatusIcon(targetElement, statusType, duration = 5000) {
     if (!targetElement) return;
     let container = targetElement.closest('.hero-card-mini');
     if (!container) container = targetElement;
     let oldTip = container.querySelector(`.status-tip-${statusType}`);
     if (oldTip) oldTip.remove();
-    
     let tip = document.createElement('div');
     tip.className = `status-tip-${statusType}`;
     tip.style.position = 'absolute';
@@ -347,7 +294,6 @@ function showStatusIcon(targetElement, statusType, duration = 5000) {
     tip.style.whiteSpace = 'nowrap';
     tip.style.zIndex = '1000';
     tip.style.pointerEvents = 'none';
-    
     let text = '';
     switch (statusType) {
         case 'stun': text = '😵 眩晕'; break;
@@ -358,9 +304,7 @@ function showStatusIcon(targetElement, statusType, duration = 5000) {
     }
     tip.innerText = text;
     container.appendChild(tip);
-    setTimeout(() => {
-        if (tip && tip.parentNode) tip.remove();
-    }, duration);
+    setTimeout(() => tip.remove(), duration);
 }
 
 function applySkillEffect(skillType, targetElement, casterElement, skillName = '') {
@@ -435,15 +379,11 @@ function highlightHero(heroAvatar, duration = 500) {
     setTimeout(() => heroAvatar.classList.remove('glow-effect'), duration);
 }
 
-// ========== 单体攻击动画 ==========
 async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, damage, skillType, isHeal, targetId, skillName) {
     if (window.skipRequested) return;
     if (skillName) showSkillName(skillName, 2000);
     if (!attackerAvatar || !targetAvatar) return;
-
-    // 确保战斗所需音效已解码
     await ensureBattleSoundsReady(attackerId, targetId);
-
     let videoPlace = null;
     let videoFile = skillVideoMap[skillName];
     if (videoFile) {
@@ -467,13 +407,10 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
         videoPlace.style.display = 'flex';
         await new Promise(r => setTimeout(r, 400));
     }
-
     const startRect = attackerAvatar.getBoundingClientRect();
     const targetRect = targetAvatar.getBoundingClientRect();
-    
     const originalOpacity = attackerAvatar.style.opacity;
     attackerAvatar.style.opacity = '0';
-
     const clone = attackerAvatar.cloneNode(true);
     clone.style.position = 'fixed';
     clone.style.left = startRect.left + 'px';
@@ -487,13 +424,9 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
     clone.style.backgroundRepeat = 'no-repeat';
     clone.style.backgroundPosition = 'center';
     document.body.appendChild(clone);
-
     const attackerCard = attackerAvatar.closest('.hero-card-mini');
     const originalCardDisplay = attackerCard ? attackerCard.style.display : null;
-    if (attackerCard) {
-        attackerCard.style.display = 'none';
-    }
-
+    if (attackerCard) attackerCard.style.display = 'none';
     const attackerCenter = { x: startRect.left + startRect.width/2, y: startRect.top + startRect.height/2 };
     const targetCenter = { x: targetRect.left + targetRect.width/2, y: targetRect.top + targetRect.height/2 };
     const dirX = targetCenter.x - attackerCenter.x;
@@ -514,7 +447,6 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
         let transformStr = `translate(${deltaX}px, ${deltaY}px) scale(1.1) rotateX(8deg)`;
         clone.style.transform = transformStr;
     }
-
     await new Promise(r => setTimeout(r, 500));
     if (window.skipRequested) {
         clone.remove();
@@ -523,14 +455,12 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
         if (videoPlace) videoPlace.style.display = 'none';
         return;
     }
-
     const originalTargetSrc = targetAvatar.src;
     targetAvatar.src = `/static/images/heroes/${targetId}_hit.png`;
     playSound(`/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
     playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
     if (!isHeal) showDamageNumber(targetAvatar, damage);
     if (skillType) applySkillEffect(skillType, targetAvatar, attackerAvatar, skillName);
-
     await new Promise(r => setTimeout(r, 900));
     if (window.skipRequested) {
         clone.remove();
@@ -540,7 +470,6 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
         if (videoPlace) videoPlace.style.display = 'none';
         return;
     }
-
     clone.remove();
     attackerAvatar.style.opacity = originalOpacity;
     if (attackerCard) attackerCard.style.display = originalCardDisplay;
@@ -548,18 +477,13 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
     if (videoPlace) videoPlace.style.display = 'none';
 }
 
-// ========== 群体攻击动画 ==========
 async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skillType, skillName) {
     if (window.skipRequested) return;
     if (skillName) showSkillName(skillName, 2000);
     if (!attackerAvatar) return;
-    
-    // 确保攻击音效已解码
     await ensureBattleSoundsReady(attackerId, targetsInfo[0]?.id || '');
-    
     const originalSrc = attackerAvatar.src;
     const rect = attackerAvatar.getBoundingClientRect();
-
     const isEnemy = attackerAvatar.closest('.right-grid') !== null;
     let targetGrid = isEnemy ? document.querySelector('.left-grid') : document.querySelector('.right-grid');
     let centerX, centerY;
@@ -571,16 +495,13 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
         centerX = window.innerWidth / 2 - rect.width / 2;
         centerY = window.innerHeight / 2 - rect.height / 2 - 50;
     }
-
     let transformStr = `translate(${centerX - rect.left}px, ${centerY - rect.top}px) scale(1.3)`;
     if (isEnemy) transformStr += ` scaleX(-1)`;
     attackerAvatar.style.transition = 'transform 0.5s ease-in-out';
     attackerAvatar.style.transform = transformStr;
     await new Promise(r => setTimeout(r, 500));
     if (window.skipRequested) return;
-
     attackerAvatar.src = `/static/images/heroes/${attackerId}_attack.png`;
-
     let videoPlace = null;
     let videoFile = skillVideoMap[skillName];
     if (videoFile) {
@@ -598,22 +519,12 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
         video.loop = false;
         video.muted = true;
         video.playsInline = true;
-        video.onerror = (e) => {
-            console.error(`视频加载失败: ${videoFile}`, e);
-            if (videoPlace) videoPlace.style.display = 'none';
-        };
-        video.oncanplay = () => {
-            video.play().catch(err => {
-                console.warn(`视频自动播放失败: ${videoFile}`, err);
-                if (videoPlace) videoPlace.style.display = 'none';
-            });
-        };
+        video.onerror = (e) => { console.error(`视频加载失败: ${videoFile}`, e); if (videoPlace) videoPlace.style.display = 'none'; };
+        video.oncanplay = () => { video.play().catch(err => { console.warn(`视频自动播放失败: ${videoFile}`, err); if (videoPlace) videoPlace.style.display = 'none'; }); };
         videoPlace.appendChild(video);
         videoPlace.style.display = 'flex';
     }
-
     playSound(`/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
-
     for (let i = 0; i < targetsInfo.length; i++) {
         if (window.skipRequested) break;
         const t = targetsInfo[i];
@@ -625,7 +536,6 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
         await new Promise(r => setTimeout(r, 500));
         t.avatar.classList.remove('hit-shake');
     }
-
     if (videoPlace) videoPlace.style.display = 'none';
     attackerAvatar.src = originalSrc;
     attackerAvatar.style.transform = '';
@@ -643,7 +553,6 @@ function updateEnemyPlayerAvatar(avatarUrl, playerName) {
     container.appendChild(div);
 }
 
-// ========== 血量与UI ==========
 function applyFinalHp(log, winner) {
     leftTeam = JSON.parse(JSON.stringify(originalLeftTeam));
     rightTeam = JSON.parse(JSON.stringify(originalRightTeam));
@@ -713,10 +622,7 @@ async function playBattleLogWithDelay(log, winner) {
     }
     if (!log || log.length === 0) {
         if (typeof addLog === 'function') addLog(`⚡ 战斗结束，胜者: ${winner === 'left' ? '我方' : '敌方'}`);
-        setTimeout(() => {
-            if (battleCallback) battleCallback(winner);
-            hideBattlePanel();
-        }, 2000);
+        setTimeout(() => { if (battleCallback) battleCallback(winner); hideBattlePanel(); }, 2000);
         return;
     }
     leftTeam = JSON.parse(JSON.stringify(originalLeftTeam));
@@ -747,13 +653,10 @@ async function playBattleLogWithDelay(log, winner) {
                     let attackerName = entry.attacker;
                     let targetName = entry.target;
                     let damage = entry.damage || 0;
-
                     if (typeof addLog === 'function') addLog(`${attackerName} 攻击 ${targetName} 造成 ${damage} 伤害${entry.dead ? '，目标死亡！' : ''}`);
-
                     let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
                     let targetAvatar = getHeroAvatarDiv(entry.target_team, targetName);
                     highlightHero(attackerAvatar, 500);
-
                     let attackerId = getHeroId(attackerName, {});
                     if (attackerAvatar && targetAvatar) {
                         let targetId = getHeroId(targetName, {});
@@ -761,7 +664,6 @@ async function playBattleLogWithDelay(log, winner) {
                     } else {
                         await new Promise(r => setTimeout(r, 1400));
                     }
-
                     let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
                     let hero = targetTeam.find(h => h.name === targetName);
                     if (hero) {
@@ -772,11 +674,39 @@ async function playBattleLogWithDelay(log, winner) {
                     let attackerName = entry.attacker;
                     let skillName = entry.skill;
                     let skillType = entry.skill_type;
-
+                    // 添加文字日志（根据技能类型）
+                    if (typeof addLog === 'function') {
+                        if (entry.is_multi && entry.targets) {
+                            let totalDamage = entry.targets.reduce((sum, t) => sum + (t.damage || 0), 0);
+                            if (skillType === 'heal') {
+                                addLog(`${attackerName} 使用 ${skillName} 治疗了多名队友`);
+                            } else if (skillType === 'buff') {
+                                addLog(`${attackerName} 使用 ${skillName} 为全体施加增益`);
+                            } else if (skillType === 'shield') {
+                                addLog(`${attackerName} 使用 ${skillName} 为全体附加护盾`);
+                            } else {
+                                addLog(`${attackerName} 使用 ${skillName} 对多名敌人造成 ${totalDamage} 总伤害`);
+                            }
+                        } else {
+                            let targetName = entry.target;
+                            let damage = entry.damage || 0;
+                            let isHeal = (skillType === 'heal');
+                            let isBuff = (skillType === 'buff');
+                            let isShield = (skillType === 'shield');
+                            if (isHeal) {
+                                addLog(`${attackerName} 使用 ${skillName} 治疗 ${targetName} ${damage} 生命`);
+                            } else if (isBuff) {
+                                addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 施加增益`);
+                            } else if (isShield) {
+                                addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 附加护盾`);
+                            } else {
+                                addLog(`${attackerName} 使用 ${skillName} 对 ${targetName} 造成 ${damage} 伤害${entry.dead ? '，目标死亡！' : ''}`);
+                            }
+                        }
+                    }
                     if (entry.is_multi && entry.targets) {
                         let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
                         let attackerId = getHeroId(attackerName, {});
-
                         for (let t of entry.targets) {
                             let targetTeam = (t.team === 'left') ? leftTeam : rightTeam;
                             let hero = targetTeam.find(h => h.name === t.name);
@@ -785,7 +715,6 @@ async function playBattleLogWithDelay(log, winner) {
                                 updateHeroHpBar(t.team, t.name, hero.hp, hero.maxHp);
                             }
                         }
-
                         const isNonDamage = (skillType === 'buff' || skillType === 'heal' || skillType === 'shield');
                         if (isNonDamage) {
                             showSkillName(skillName, 2000);
@@ -810,6 +739,7 @@ async function playBattleLogWithDelay(log, winner) {
                             }
                             await new Promise(r => setTimeout(r, 1500));
                         } else {
+                            // 伤害型群体技能：先输出日志（已在上面添加），再播放动画
                             let targetsWithAvatar = [];
                             for (let t of entry.targets) {
                                 let avatar = getHeroAvatarDiv(t.team, t.name);
@@ -836,18 +766,9 @@ async function playBattleLogWithDelay(log, winner) {
                         let isHeal = (skillType === 'heal');
                         let isBuff = (skillType === 'buff');
                         let isShield = (skillType === 'shield');
-
-                        if (typeof addLog === 'function') {
-                            if (isBuff) addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 施加增益`);
-                            else if (isHeal) addLog(`${attackerName} 使用 ${skillName} 治疗 ${targetName} ${damage} 生命`);
-                            else if (isShield) addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 附加护盾`);
-                            else addLog(`${attackerName} 使用 ${skillName} 对 ${targetName} 造成 ${damage} 伤害${entry.dead ? '，目标死亡！' : ''}`);
-                        }
-
                         let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
                         let targetAvatar = getHeroAvatarDiv(entry.target_team, targetName);
                         highlightHero(attackerAvatar, 500);
-
                         if (isBuff || isHeal || isShield) {
                             showSkillName(skillName, 2000);
                             if (isHeal) {
@@ -897,11 +818,8 @@ async function playBattleLogWithDelay(log, winner) {
         if (!window.skipRequested && window.isFighting) {
             if (typeof addLog === 'function') addLog(`🏆 战斗结束，胜者: ${winner === 'left' ? '我方' : '敌方'}`);
             if (battleCallback) battleCallback(winner);
-            if (winner === 'left') {
-                if (typeof window.playWinSound === 'function') window.playWinSound();
-            } else {
-                if (typeof window.playLoseSound === 'function') window.playLoseSound();
-            }
+            if (winner === 'left') { if (typeof window.playWinSound === 'function') window.playWinSound(); }
+            else { if (typeof window.playLoseSound === 'function') window.playLoseSound(); }
             applyFinalHp(log, winner);
             hideBattlePanel();
         } else {
@@ -915,23 +833,17 @@ async function playBattleLogWithDelay(log, winner) {
 }
 
 function showBattlePanel(leftTeamData, rightTeamData, logs, winner, leftPower, rightPower, callback, enemyPlayerName = null, enemyAvatar = null) {
-    if (!leftTeamData || !rightTeamData) {
-        if (callback) callback(winner);
-        return;
-    }
+    if (!leftTeamData || !rightTeamData) { if (callback) callback(winner); return; }
     for (let h of leftTeamData) if (h.maxHp > 0) h.hp = h.maxHp;
     for (let h of rightTeamData) if (h.maxHp > 0) h.hp = h.maxHp;
-
     if (enemyPlayerName) {
         let avatarUrl = enemyAvatar || `/static/images/heroes/${enemyPlayerName}.png`;
         updateEnemyPlayerAvatar(avatarUrl, enemyPlayerName);
     } else {
         updateEnemyPlayerAvatar('/static/images/heroes/hero.png', '敌方');
     }
-
     let friendPanel = document.getElementById('friendPanel');
     if (friendPanel) friendPanel.style.display = 'none';
-
     let validLogs = logs && logs.length ? logs : [{ type: "status", text: "战斗瞬间结束" }];
     leftTeam = JSON.parse(JSON.stringify(leftTeamData));
     rightTeam = JSON.parse(JSON.stringify(rightTeamData));
@@ -945,13 +857,10 @@ function showBattlePanel(leftTeamData, rightTeamData, logs, winner, leftPower, r
     if (document.getElementById('rightPower')) document.getElementById('rightPower').innerText = rightPower || 0;
     if (document.getElementById('mainContent')) document.getElementById('mainContent').style.display = 'none';
     if (document.getElementById('battlePanel')) document.getElementById('battlePanel').style.display = 'flex';
-    
     window.isFighting = true;
     window.skipRequested = false;
     if (window.currentAnimationPromise) window.currentAnimationPromise = null;
-    
     if (typeof window.playBattleMusic === 'function') window.playBattleMusic();
-    
     playBattleLogWithDelay(validLogs, winner);
 }
 
@@ -969,16 +878,11 @@ function renderGrids() {
 }
 
 function renderOneGrid(gridId, team) {
-    if (window.isFighting) {
-        console.warn('[渲染拦截] 战斗进行中，禁止刷新网格');
-        return;
-    }
+    if (window.isFighting) { console.warn('[渲染拦截] 战斗进行中，禁止刷新网格'); return; }
     let container = document.getElementById(gridId);
     if (!container) return;
-    
     container.innerHTML = '';
     container.className = 'grid-3x3 ' + (gridId === 'leftGrid' ? 'left-grid' : 'right-grid');
-    
     for (let rowIdx = 0; rowIdx < 3; rowIdx++) {
         let rowDiv = document.createElement('div');
         rowDiv.className = `grid-row grid-row-${rowIdx + 1}`;
@@ -989,7 +893,6 @@ function renderOneGrid(gridId, team) {
         }
         container.appendChild(rowDiv);
     }
-    
     let slots = container.querySelectorAll('.grid-slot');
     for (let hero of team) {
         let pos = hero.position;
@@ -1072,19 +975,10 @@ window.unlockAndDecodeSounds = unlockAndDecodeSounds;
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         loadSkillAnimations().then(() => initBattleControls());
-        // 预加载音效文件（只下载不解码）
-        if (window.currentUser) {
-            startPreload().catch(console.warn);
-        }
+        if (window.currentUser) startPreload().catch(console.warn);
     });
 } else {
     loadSkillAnimations().then(() => initBattleControls());
-    if (window.currentUser) {
-        startPreload().catch(console.warn);
-    }
+    if (window.currentUser) startPreload().catch(console.warn);
 }
-
-// 监听全局点击事件，用户首次交互时解码音效（自动播放策略需要）
-document.body.addEventListener('click', () => {
-    unlockAndDecodeSounds();
-}, { once: true });
+document.body.addEventListener('click', () => { unlockAndDecodeSounds(); }, { once: true });

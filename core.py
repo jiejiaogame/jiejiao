@@ -1,4 +1,6 @@
 # core.py - 完整版（含战力字段、音量字段、祈愿祝福、每日任务、宝石、占领等）
+# 修复：保证所有生命值计算结果至少为 1
+
 import asyncio
 import sqlite3
 import json
@@ -781,11 +783,11 @@ def get_volume(username: str) -> int:
     user = get_user(username)
     return user.get("volume", 70) if user else 70
 
-# ---------- 生命值计算辅助函数（修复版）----------
+# ---------- 生命值计算辅助函数（修复版：确保至少1） ----------
 def calculate_hero_max_hp(hero_info: dict, star: int, level: int, bonus_hp: int = 0, gem_hp_bonus: int = 0) -> int:
     """
     计算武将最大生命值
-    hero_info: 武将基础数据（包含 star1_hp, star2_hp, star3_hp, star4_hp, star5_hp）
+    hero_info: 武将基础数据（包含 star5_hp 等）
     star: 当前星级 (1-5)
     level: 当前等级 (1-100)
     bonus_hp: 自由加点提供的生命值加成
@@ -802,7 +804,7 @@ def calculate_hero_max_hp(hero_info: dict, star: int, level: int, bonus_hp: int 
     # 加上自由加点加成和宝石加成
     total_hp = hp_from_level + bonus_hp + gem_hp_bonus
     
-    return max(1, total_hp)
+    return max(1, total_hp)  # 确保至少1点生命
 
 def calculate_hero_current_hp(hero_info: dict, star: int, level: int, current_hp_ratio: float = 1.0, 
                                bonus_hp: int = 0, gem_hp_bonus: int = 0) -> int:
@@ -863,7 +865,7 @@ def get_team_total_hp(username: str, formation: list = None) -> int:
 
 def apply_damage_to_hero(hero_current_hp: int, damage: int) -> int:
     """
-    对武将造成伤害，返回新的当前生命值
+    对武将造成伤害，返回新的当前生命值（不低于0）
     """
     return max(0, hero_current_hp - damage)
 

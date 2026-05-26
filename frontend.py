@@ -798,33 +798,41 @@ def get_html():
         font-size: 9px;
     }
 
-    /* ========== 战斗画面（手机版专用，血量条可见） ========== */
+    /* ========== 战斗画面（手机版专用） ========== */
     .battle-panel {
         overflow-y: auto;
         justify-content: flex-start;
         padding: 5px 5px 120px 5px;
         -webkit-overflow-scrolling: touch;
     }
-    /* 血量条区域 - 确保手机版可见 */
+
+    /* 血量条区域 - 确保不被背景遮住，提高层级 */
     .health-bars {
+        position: relative;
+        z-index: 30;
         padding: 8px 12px;
         flex-direction: row;
         gap: 20px;
-        background: rgba(0,0,0,0.8);
+        background: rgba(0, 0, 0, 0.85);
         border-radius: 12px;
         margin-bottom: 10px;
         justify-content: center;
         border: 1px solid gold;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
     .team-health {
         font-size: 12px;
         flex: 1;
         text-align: center;
         max-width: 160px;
-        background: rgba(30,40,30,0.9);
+        background: rgba(30, 40, 30, 0.95);
         border-radius: 10px;
         padding: 5px 8px;
         border: 1px solid #d99e3e;
+        color: #ffd966;
+        font-weight: bold;
+        text-shadow: 0 0 2px #000;
     }
     .team-health .total-bar {
         width: 100%;
@@ -842,9 +850,11 @@ def get_html():
     .power-value {
         font-size: 10px;
         padding: 2px 6px;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.7);
         border-radius: 20px;
+        color: #ffaa66;
     }
+
     .battlefield {
         padding: 0;
         flex-direction: column;
@@ -853,6 +863,7 @@ def get_html():
         overflow-x: visible;
         min-height: auto;
     }
+
     /* 我方阵营 - 下移半个人距离 */
     .grid-container.left-grid-container {
         width: 100%;
@@ -867,11 +878,16 @@ def get_html():
         text-align: left;
         margin-left: 10px;
         margin-bottom: 5px;
+        transform: translateY(-8px); /* 标题上移，避免与血量条重叠 */
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 2px black;
     }
     .left-grid-container .grid-3x3 {
         transform: scale(0.85);
         transform-origin: top left;
     }
+
     /* 敌方阵营 - 上移一个人距离 */
     .grid-container.right-grid-container {
         width: 100%;
@@ -887,11 +903,16 @@ def get_html():
         text-align: right;
         margin-right: 10px;
         margin-bottom: 5px;
+        transform: translateY(-8px); /* 标题上移，避免与血量条重叠 */
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 2px black;
     }
     .right-grid-container .grid-3x3 {
         transform: scale(0.85);
         transform-origin: top right;
     }
+
     .grid-slot {
         width: 60px;
         height: 80px;
@@ -938,26 +959,26 @@ def get_html():
         z-index: 10015;
         padding: 2px 8px;
     }
-    /* ========== 战斗按钮：居中，上移对齐敌方九宫格下沿 ========== */
+
+    /* 战斗按钮：靠左对齐，位于敌方九宫格中间高度 */
     .controls {
         position: relative;
         z-index: 10003;
-        margin-top: -50px;          /* 上移使按钮靠近敌方阵营下沿 */
-        margin-bottom: 20px;        /* 给日志面板留出空间 */
-        width: fit-content;
-        margin-left: auto;
+        margin-top: -110px;          /* 垂直上移到敌方九宫格中间区域 */
+        margin-left: 10px;           /* 靠左对齐 */
         margin-right: auto;
+        width: fit-content;
         background: rgba(0,0,0,0.8);
-        padding: 8px 16px;
-        gap: 15px;
+        padding: 6px 12px;
+        gap: 12px;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         border-radius: 40px;
         backdrop-filter: blur(4px);
         box-shadow: 0 0 8px rgba(0,0,0,0.5);
     }
     .controls button {
-        padding: 5px 18px;
+        padding: 4px 16px;
         font-size: 13px;
         background: #d99e3e;
         color: #1e2a2e;
@@ -966,12 +987,14 @@ def get_html():
         font-weight: bold;
         cursor: pointer;
     }
+
     .enemy-avatars {
         top: 5px;
         right: 5px;
         padding: 2px 5px;
         background: rgba(0,0,0,0.5);
         border-radius: 20px;
+        z-index: 25;
     }
     .enemy-avatar-item {
         width: 30px;
@@ -984,7 +1007,7 @@ def get_html():
         font-size: 8px;
     }
 
-    /* ========== 日志栏 - 聊天文字金黄色 ========== */
+    /* ========== 日志栏 ========== */
     .log-panel {
         width: calc(100% - 20px);
         right: 10px;

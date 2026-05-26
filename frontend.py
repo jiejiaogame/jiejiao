@@ -120,6 +120,7 @@ def get_html():
         
         /* ========== 手机版适配（宽度 ≤ 768px） ========== */
 @media (max-width: 768px) {
+    /* ========== 顶部栏：两行布局 ========== */
     .top-bar {
         display: grid;
         grid-template-areas: 
@@ -322,22 +323,22 @@ def get_html():
         font-size: 9px;
     }
 
-    /* 战斗画面 - 紧凑布局 */
+    /* ========== 战斗画面 - 紧凑布局，左右贴边，底部留白 ========== */
     .battle-panel {
         overflow-y: auto;
-        justify-content: flex-start;
-        padding: 5px 5px 120px 5px;
+        padding: 10px 5px 180px 5px;
         -webkit-overflow-scrolling: touch;
     }
     .health-bars {
-        position: relative;
+        position: sticky;
+        top: 0;
         z-index: 30;
         padding: 8px 12px;
         flex-direction: row;
         gap: 20px;
         background: rgba(0, 0, 0, 0.85);
         border-radius: 12px;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         justify-content: center;
         border: 1px solid gold;
         backdrop-filter: blur(4px);
@@ -377,28 +378,29 @@ def get_html():
         color: #ffaa66;
     }
     .battlefield {
-        padding: 0;
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-        overflow-x: visible;
-        min-height: auto;
-    }
-    /* 我方阵营 - 紧贴血量条 */
-    .grid-container.left-grid-container {
-        width: 100%;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        margin-left: 0;
-        margin-top: 0px;
+        align-items: stretch;
+        gap: 20px;
+    }
+    .grid-container.left-grid-container,
+    .grid-container.right-grid-container {
+        position: static;
+        margin: 0;
+        width: 100%;
     }
     .left-grid-container .grid-title {
         font-size: 12px;
         text-align: left;
-        margin-left: 10px;
-        margin-bottom: 5px;
-        transform: translateY(-8px);
+        margin: 0 0 5px 10px;
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 2px black;
+    }
+    .right-grid-container .grid-title {
+        font-size: 12px;
+        text-align: right;
+        margin: 0 10px 5px 0;
         color: gold;
         font-weight: bold;
         text-shadow: 0 0 2px black;
@@ -406,30 +408,14 @@ def get_html():
     .left-grid-container .grid-3x3 {
         transform: scale(0.85);
         transform-origin: top left;
-    }
-    /* 敌方阵营 - 上移一个人物高度，使双方紧凑 */
-    .grid-container.right-grid-container {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        margin-right: 0;
-        margin-top: -150px;      /* 上移 150px，约一个人物高度 */
-        margin-bottom: 0;
-    }
-    .right-grid-container .grid-title {
-        font-size: 12px;
-        text-align: right;
-        margin-right: 10px;
-        margin-bottom: 5px;
-        transform: translateY(-8px);
-        color: gold;
-        font-weight: bold;
-        text-shadow: 0 0 2px black;
+        width: 117%;
+        margin-left: -8%;
     }
     .right-grid-container .grid-3x3 {
         transform: scale(0.85);
         transform-origin: top right;
+        width: 117%;
+        margin-right: -8%;
     }
     .grid-slot {
         width: 60px;
@@ -477,14 +463,13 @@ def get_html():
         z-index: 10015;
         padding: 2px 8px;
     }
-    /* 逃跑按钮随敌方上移 */
+    /* 逃跑按钮：固定在左下角，避免与聊天输入框冲突 */
     .controls {
-        position: relative;
+        position: fixed;
+        bottom: 80px;
+        left: 10px;
         z-index: 10003;
-        margin-top: -150px;
-        margin-left: 5px;
-        margin-right: auto;
-        width: fit-content;
+        margin: 0;
         background: rgba(0,0,0,0.7);
         padding: 4px 10px;
         border-radius: 30px;
@@ -611,8 +596,6 @@ def get_html():
     .empty-slot {
         font-size: 10px;
     }
-
-    /* 宝石分解底部留白 */
     #tab-gems {
         padding-bottom: 120px;
     }
@@ -1086,8 +1069,8 @@ function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
     ws = new WebSocket(`${protocol}${location.host}/ws`);
     ws.onopen = () => { console.log("WebSocket 已连接"); ws.send(JSON.stringify({ act: "login", uid: currentUser })); };
-    ws.onerror = (err) => { console.error("WebSocket 错误", err); addLog("❌ 聊天服务器连接失败，5秒后重试", "red"); setTimeout(connectWebSocket, 30000); };
-    ws.onclose = () => { console.log("WebSocket 关闭，尝试重连..."); setTimeout(connectWebSocket, 30000); };
+    ws.onerror = (err) => { console.error("WebSocket 错误", err); addLog("❌ 聊天服务器连接失败，5秒后重试", "red"); setTimeout(connectWebSocket, 5000); };
+    ws.onclose = () => { console.log("WebSocket 关闭，尝试重连..."); setTimeout(connectWebSocket, 5000); };
     ws.onmessage = (e) => {
         let data = JSON.parse(e.data);
         if (data.type === "login_ok") console.log("登录成功");

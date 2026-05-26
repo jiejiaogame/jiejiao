@@ -1,4 +1,4 @@
-# battle_engine.py - 最终版（支持中毒持续伤害、增益、群体单条日志；PVP战斗敌方位置镜像对称）
+# battle_engine.py - 修复版（保证血量至少为1，补充position字段）
 import random
 import copy
 import re
@@ -62,13 +62,11 @@ def get_final_attrs(hero: Dict) -> Dict:
     auto_spd = star * 0.15 * (level - 1)
 
     final = {
-        'hp': base.get('hp', 30) + bonus.get('hp', 0) + auto_hp,
-        'strength': base.get('strength', 10) + bonus.get('strength', 0) + auto_str,
-        'intelligence': base.get('intelligence', 10) + bonus.get('intelligence', 0) + auto_int,
-        'speed': base.get('speed', 20) + bonus.get('speed', 0) + auto_spd
+        'hp': max(1, int(base.get('hp', 30) + bonus.get('hp', 0) + auto_hp)),
+        'strength': max(0, int(base.get('strength', 10) + bonus.get('strength', 0) + auto_str)),
+        'intelligence': max(0, int(base.get('intelligence', 10) + bonus.get('intelligence', 0) + auto_int)),
+        'speed': max(0, int(base.get('speed', 20) + bonus.get('speed', 0) + auto_spd))
     }
-    for k in final:
-        final[k] = int(final[k])
     return final
 
 def calculate_hero_power(hero: Dict) -> int:
@@ -93,7 +91,15 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
     left = copy.deepcopy(team_left)
     right = copy.deepcopy(team_right)
     
-    # PVP 战斗：敌方队伍位置镜像对称（与左方阵营左右翻转）
+    # 为每个英雄补充 position（若缺失则按索引分配）
+    for idx, h in enumerate(left):
+        if 'position' not in h:
+            h['position'] = idx % 9
+    for idx, h in enumerate(right):
+        if 'position' not in h:
+            h['position'] = idx % 9
+
+    # PVP 战斗：敌方队伍位置镜像对称
     right = mirror_team_positions(right)
 
     for h in left:
@@ -101,9 +107,7 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
             h['final'] = h['final_attrs']
         else:
             h['final'] = get_final_attrs(h)
-        h['max_hp'] = h.get('maxHp', h['final'].get('hp', 0))
-        if h['max_hp'] <= 0:
-            h['max_hp'] = 100
+        h['max_hp'] = max(1, h.get('maxHp', h['final'].get('hp', 100)))
         h['current_hp'] = h['max_hp']
         h['shield'] = 0
         h['team'] = 'left'
@@ -117,9 +121,7 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
             h['final'] = h['final_attrs']
         else:
             h['final'] = get_final_attrs(h)
-        h['max_hp'] = h.get('maxHp', h['final'].get('hp', 0))
-        if h['max_hp'] <= 0:
-            h['max_hp'] = 100
+        h['max_hp'] = max(1, h.get('maxHp', h['final'].get('hp', 100)))
         h['current_hp'] = h['max_hp']
         h['shield'] = 0
         h['team'] = 'right'
@@ -263,15 +265,20 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
         winner = 'draw'
 
     def clean_team(team):
-        return [{
-            'name': h['name'],
-            'hp': h['current_hp'],
-            'maxHp': h['max_hp'],
-            'position': h.get('position', 0),
-            'team': h['team'],
-            'id': h.get('id', h['name']),
-            'shield': h.get('shield', 0)
-        } for h in team]
+        cleaned = []
+        for h in team:
+            # 确保 position 存在（用于前端九宫格）
+            pos = h.get('position', 0)
+            cleaned.append({
+                'name': h['name'],
+                'hp': max(0, int(h['current_hp'])),
+                'maxHp': max(1, int(h['max_hp'])),
+                'position': pos,
+                'team': h['team'],
+                'id': h.get('id', h['name']),
+                'shield': int(h.get('shield', 0))
+            })
+        return cleaned
 
     left_power = calculate_team_power(left)
     right_power = calculate_team_power(right)

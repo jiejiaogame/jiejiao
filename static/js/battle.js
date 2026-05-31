@@ -1,4 +1,4 @@
-// static/js/battle.js - 完整修复版（所有技能伤害日志均显示）
+// static/js/battle.js - 最终稳定版（平均等级显示，移除个体等级，修复金吒ID）
 let leftTeam = [], rightTeam = [];
 let originalLeftTeam = [], originalRightTeam = [];
 window.isFighting = false;
@@ -15,12 +15,13 @@ let preloadComplete = false;
 let preloadPromise = null;
 
 function getAudioContext() {
-    if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
     return audioContext;
 }
 
 async function preloadSounds(urls, onProgress) {
-    const ctx = getAudioContext();
     const toLoad = urls.filter(url => !soundCache.has(url));
     preloadProgress.total = toLoad.length;
     preloadProgress.loaded = 0;
@@ -38,18 +39,8 @@ async function preloadSounds(urls, onProgress) {
 
 async function decodeAllSounds() {
     const ctx = getAudioContext();
-    if (ctx.state === 'suspended') await ctx.resume();
-    const entries = Array.from(soundCache.entries());
-    for (const [url, item] of entries) {
-        if (!item.decoded && item.arrayBuffer) {
-            try {
-                const buffer = await ctx.decodeAudioData(item.arrayBuffer.slice(0));
-                item.buffer = buffer;
-                item.decoded = true;
-                delete item.arrayBuffer;
-            } catch (e) { console.warn(`解码音效失败: ${url}`, e); }
-        }
-    }
+    if (ctx.state === 'suspended') { await ctx.resume(); }
+    console.log('AudioContext 已激活，音效将按需解码');
 }
 
 function playSound(url, volume = 0.5) {
@@ -66,11 +57,28 @@ function playSound(url, volume = 0.5) {
         source.start();
         return;
     }
-    if (ctx.state === 'suspended') ctx.resume().catch(e => console.warn);
-    fetch(url).then(res => res.arrayBuffer())
-        .then(buffer => ctx.decodeAudioData(buffer))
+    if (!cached || !cached.arrayBuffer) {
+        fetch(url)
+            .then(res => res.arrayBuffer())
+            .then(buffer => ctx.decodeAudioData(buffer))
+            .then(decoded => {
+                soundCache.set(url, { decoded: true, buffer: decoded });
+                const source = ctx.createBufferSource();
+                source.buffer = decoded;
+                const gainNode = ctx.createGain();
+                gainNode.gain.value = volume;
+                source.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                source.start();
+            })
+            .catch(e => console.warn("音效加载失败:", url, e));
+        return;
+    }
+    ctx.decodeAudioData(cached.arrayBuffer.slice(0))
         .then(decoded => {
-            soundCache.set(url, { decoded: true, buffer: decoded });
+            cached.buffer = decoded;
+            cached.decoded = true;
+            delete cached.arrayBuffer;
             const source = ctx.createBufferSource();
             source.buffer = decoded;
             const gainNode = ctx.createGain();
@@ -78,13 +86,14 @@ function playSound(url, volume = 0.5) {
             source.connect(gainNode);
             gainNode.connect(ctx.destination);
             source.start();
-        }).catch(e => console.warn("音效加载失败:", url, e));
+        })
+        .catch(e => console.warn(`解码音效失败: ${url}`, e));
 }
 
 async function getAllSoundUrls() {
     const heroIds = new Set();
     const allHeroes = await fetch(`/my_heroes?username=${currentUser}`).then(r => r.json()).catch(() => ({ heroes: [] }));
-    if (allHeroes.heroes) allHeroes.heroes.forEach(h => heroIds.add(h.id));
+    if (allHeroes.heroes) { allHeroes.heroes.forEach(h => heroIds.add(h.id)); }
     const commonIds = ['duobao', 'jinling', 'yunxiao', 'zhaogongming', 'daji', 'jiangziya'];
     commonIds.forEach(id => heroIds.add(id));
     const urls = [];
@@ -93,12 +102,9 @@ async function getAllSoundUrls() {
         urls.push(`/static/sounds/heroes/${id}_hit.wav`);
     }
     const commonSounds = [
-        '/static/sounds/attack_physical.wav',
-        '/static/sounds/attack_magic.wav',
-        '/static/sounds/heal.wav',
-        '/static/sounds/crit.wav',
-        '/static/sounds/victory.wav',
-        '/static/sounds/defeat.wav'
+        '/static/sounds/attack_physical.wav', '/static/sounds/attack_magic.wav',
+        '/static/sounds/heal.wav', '/static/sounds/crit.wav',
+        '/static/sounds/victory.wav', '/static/sounds/defeat.wav'
     ];
     urls.push(...commonSounds);
     return [...new Set(urls)];
@@ -115,8 +121,7 @@ async function startPreload(onProgress) {
 
 async function unlockAndDecodeSounds() {
     const ctx = getAudioContext();
-    if (ctx.state === 'suspended') await ctx.resume();
-    await decodeAllSounds();
+    if (ctx.state === 'suspended') { await ctx.resume(); }
     console.log('音效解码完成，已就绪');
 }
 
@@ -126,7 +131,7 @@ async function ensureBattleSoundsReady(attackerId, targetId) {
         `/static/sounds/heroes/${targetId}_hit.wav`
     ];
     const ctx = getAudioContext();
-    if (ctx.state === 'suspended') await ctx.resume();
+    if (ctx.state === 'suspended') { await ctx.resume(); }
     for (const url of neededUrls) {
         const cached = soundCache.get(url);
         if (cached && !cached.decoded && cached.arrayBuffer) {
@@ -140,9 +145,8 @@ async function ensureBattleSoundsReady(attackerId, targetId) {
     }
 }
 
-// ========== 技能视频映射表 ==========
+// ========== 技能视频映射 ==========
 let skillVideoMap = {};
-
 async function loadSkillAnimations() {
     try {
         const res = await fetch('/skill_animations');
@@ -152,45 +156,19 @@ async function loadSkillAnimations() {
     } catch (e) {
         console.warn('技能动画配置加载失败，使用静态默认值', e);
         skillVideoMap = {
-            "万宝朝宗": "wanbaochao.mp4",
-            "龙虎如意": "longhu.mp4",
-            "混元拂尘": "hunyuanfuchen.mp4",
-            "玄甲护体": "xuanjia.mp4",
-            "混元金斗": "hunyuanjindou.mp4",
-            "金蛟剪": "jinjiaojian.mp4",
-            "缚龙索": "fulongsuo.mp4",
-            "定海珠": "dinghaizhu.mp4",
-            "遁龙桩": "dunlongzhuang.mp4",
-            "太极符印": "taijifuyin.mp4",
-            "杨枝甘露": "yangzhiganlu.mp4",
-            "五火七禽扇": "wuhuoqiqin.mp4",
-            "降魔杵": "xiangmochu.mp4",
-            "斩仙剑": "zhanxianjian.mp4",
-            "九龙神火罩": "jiulongshenhuo.mp4",
-            "照妖鉴": "zhaoyaojian.mp4",
-            "风雷双翼": "fengleishuangyi.mp4",
-            "八九玄功": "bajiuxuangong.mp4",
-            "乾坤圈": "qiankunquan.mp4",
-            "攒心钉": "zanxinding.mp4",
-            "金光阵": "jinguangzhen.mp4",
-            "开山斧": "kaishanfu.mp4",
-            "飞头术": "feitoushu.mp4",
-            "魅惑": "meihuo.mp4",
-            "雌雄双鞭": "cixiongshuangbian.mp4",
-            "金攥提炉枪": "jinzuan tiluqiang.mp4",
-            "铁嘴神鹰": "tiezuishishenying.mp4",
-            "混元锤": "hunyuanchui.mp4",
-            "六魂幡": "liuhunfan.mp4",
-            "牛黄": "niuhuang.mp4",
-            "戮魂幡": "luhunfan.mp4",
-            "五色石": "wuseshi.mp4",
-            "百胜刀": "baishengdao.mp4",
-            "仁德": "rende.mp4",
-            "打神鞭": "dashenbian.mp4",
-            "阴阳镜": "yinyangjing.mp4",
-            "五火神焰扇": "wuhuoshenyan.mp4",
-            "降魔宝杵": "xiangmobaochu.mp4",
-            "玲珑宝塔": "linglongbaota.mp4",
+            "万宝朝宗": "wanbaochao.mp4", "龙虎如意": "longhu.mp4", "混元拂尘": "hunyuanfuchen.mp4",
+            "玄甲护体": "xuanjia.mp4", "混元金斗": "hunyuanjindou.mp4", "金蛟剪": "jinjiaojian.mp4",
+            "缚龙索": "fulongsuo.mp4", "定海珠": "dinghaizhu.mp4", "遁龙桩": "dunlongzhuang.mp4",
+            "太极符印": "taijifuyin.mp4", "杨枝甘露": "yangzhiganlu.mp4", "五火七禽扇": "wuhuoqiqin.mp4",
+            "降魔杵": "xiangmochu.mp4", "斩仙剑": "zhanxianjian.mp4", "九龙神火罩": "jiulongshenhuo.mp4",
+            "照妖鉴": "zhaoyaojian.mp4", "风雷双翼": "fengleishuangyi.mp4", "八九玄功": "bajiuxuangong.mp4",
+            "乾坤圈": "qiankunquan.mp4", "攒心钉": "zanxinding.mp4", "金光阵": "jinguangzhen.mp4",
+            "开山斧": "kaishanfu.mp4", "飞头术": "feitoushu.mp4", "魅惑": "meihuo.mp4",
+            "雌雄双鞭": "cixiongshuangbian.mp4", "金攥提炉枪": "jinzuan tiluqiang.mp4", "铁嘴神鹰": "tiezuishishenying.mp4",
+            "混元锤": "hunyuanchui.mp4", "六魂幡": "liuhunfan.mp4", "牛黄": "niuhuang.mp4",
+            "戮魂幡": "luhunfan.mp4", "五色石": "wuseshi.mp4", "百胜刀": "baishengdao.mp4",
+            "仁德": "rende.mp4", "打神鞭": "dashenbian.mp4", "阴阳镜": "yinyangjing.mp4",
+            "五火神焰扇": "wuhuoshenyan.mp4", "降魔宝杵": "xiangmobaochu.mp4", "玲珑宝塔": "linglongbaota.mp4",
             "吴钩剑": "wugoujian.mp4"
         };
     }
@@ -199,47 +177,16 @@ async function loadSkillAnimations() {
 function getHeroId(heroName, heroObj) {
     if (heroObj && heroObj.id) return heroObj.id;
     const map = {
-        "多宝道人": "duobao",
-        "金灵圣母": "jinling",
-        "无当圣母": "wudang",
-        "龟灵圣母": "guiling",
-        "云霄仙子": "yunxiao",
-        "琼霄仙子": "qiongxiao",
-        "碧霄仙子": "bixiao",
-        "赵公明": "zhaogongming",
-        "妲己": "daji",
-        "文殊广法天尊": "wenshujun",
-        "普贤真人": "puxian",
-        "慈航道人": "cihang",
-        "清虚道德真君": "qingxu",
-        "道行天尊": "daoxing",
-        "玉鼎真人": "yuding",
-        "太乙真人": "taiyi",
-        "云中子": "yunzhongzi",
-        "雷震子": "leizhenzi",
-        "杨戬": "yangjian",
-        "哪吒": "nezha",
-        "黄天化": "huangtianhua",
-        "金光圣母": "jinguang",
-        "巨灵神": "juling",
-        "申公豹": "shenggong",
-        "闻仲": "wenpeng",
-        "黄飞虎": "huangfeihu",
-        "崇黑虎": "chongheihu",
-        "乌云仙": "wuyunxian",
-        "长耳定光仙": "changxian",
-        "金大升": "jintai",
-        "余化": "yuwenhua",
-        "韩智仙": "hanzhixian",
-        "苏护": "suihu",
-        "姬发": "jifayou",
-        "姜子牙": "jiangziya",
-        "申元": "shenyuan",
-        "杨任": "yangren",
-        "韦护": "weihu",
-        "李靖": "lidong",
-        "金吒": "jinna",
-        "木吒": "muzha",
+        "多宝道人": "duobao", "金灵圣母": "jinling", "无当圣母": "wudang", "龟灵圣母": "guiling",
+        "云霄仙子": "yunxiao", "琼霄仙子": "qiongxiao", "碧霄仙子": "bixiao", "赵公明": "zhaogongming",
+        "妲己": "daji", "文殊广法天尊": "wenshujun", "普贤真人": "puxian", "慈航道人": "cihang",
+        "清虚道德真君": "qingxu", "道行天尊": "daoxing", "玉鼎真人": "yuding", "太乙真人": "taiyi",
+        "云中子": "yunzhongzi", "雷震子": "leizhenzi", "杨戬": "yangjian", "哪吒": "nezha",
+        "黄天化": "huangtianhua", "金光圣母": "jinguang", "巨灵神": "juling", "申公豹": "shenggong",
+        "闻仲": "wenpeng", "黄飞虎": "huangfeihu", "崇黑虎": "chongheihu", "乌云仙": "wuyunxian",
+        "长耳定光仙": "changxian", "金大升": "jintai", "余化": "yuwenhua", "韩智仙": "hanzhixian",
+        "苏护": "suihu", "姬发": "jifayou", "姜子牙": "jiangziya", "申元": "shenyuan",
+        "杨任": "yangren", "韦护": "weihu", "李靖": "lidong", "金吒": "jinzha", "木吒": "muzha",
         "凡人修士": "mortal"
     };
     return map[heroName] || heroName.toLowerCase().replace(/[^a-z]/g, '');
@@ -247,7 +194,7 @@ function getHeroId(heroName, heroObj) {
 
 let currentSkillNameElement = null;
 function showSkillName(skillName, duration = 2000) {
-    if (currentSkillNameElement) currentSkillNameElement.remove();
+    if (currentSkillNameElement) { currentSkillNameElement.remove(); currentSkillNameElement = null; }
     let container = document.getElementById('battlePanel');
     if (!container) return;
     let div = document.createElement('div');
@@ -304,7 +251,7 @@ function showStatusIcon(targetElement, statusType, duration = 5000) {
     }
     tip.innerText = text;
     container.appendChild(tip);
-    setTimeout(() => tip.remove(), duration);
+    setTimeout(() => { if (tip && tip.parentNode) tip.remove(); }, duration);
 }
 
 function applySkillEffect(skillType, targetElement, casterElement, skillName = '') {
@@ -323,10 +270,8 @@ function applySkillEffect(skillType, targetElement, casterElement, skillName = '
             setTimeout(() => flash.remove(), 200);
             break;
         case 'control':
-            {
-                let container = targetElement.closest('.hero-card-mini') || targetElement;
-                setTimeout(() => showStatusIcon(container, 'stun', 5000), 50);
-            }
+            { let container = targetElement.closest('.hero-card-mini') || targetElement;
+              setTimeout(() => showStatusIcon(container, 'stun', 5000), 50); }
             break;
         case 'debuff':
             if (skillName && (skillName.includes('毒') || skillName.includes('蛊'))) {
@@ -341,16 +286,12 @@ function applySkillEffect(skillType, targetElement, casterElement, skillName = '
             setTimeout(() => targetElement.classList.remove('heal-glow'), 400);
             break;
         case 'buff':
-            {
-                let container = targetElement.closest('.hero-card-mini') || targetElement;
-                setTimeout(() => showStatusIcon(container, 'strength_up', 5000), 50);
-            }
+            { let container = targetElement.closest('.hero-card-mini') || targetElement;
+              setTimeout(() => showStatusIcon(container, 'strength_up', 5000), 50); }
             break;
         case 'shield':
-            {
-                let container = targetElement.closest('.hero-card-mini') || targetElement;
-                setTimeout(() => showStatusIcon(container, 'shield', 5000), 50);
-            }
+            { let container = targetElement.closest('.hero-card-mini') || targetElement;
+              setTimeout(() => showStatusIcon(container, 'shield', 5000), 50); }
             break;
         default: break;
     }
@@ -395,14 +336,32 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
             document.body.appendChild(videoPlace);
         }
         videoPlace.innerHTML = '';
+        let currentVideoSrc = `/static/videos/${videoFile}`;
+        let fallbackVideoSrc = '/static/videos/season.mp4';
         let video = document.createElement('video');
-        video.src = `/static/videos/${videoFile}`;
-        video.autoplay = true;
-        video.loop = false;
-        video.muted = true;
-        video.playsInline = true;
-        video.onerror = (e) => { console.error(`视频加载失败: ${videoFile}`, e); if (videoPlace) videoPlace.style.display = 'none'; };
-        video.oncanplay = () => { video.play().catch(err => { console.warn(`视频自动播放失败: ${videoFile}`, err); if (videoPlace) videoPlace.style.display = 'none'; }); };
+        const tryPlay = (src) => {
+            video.src = src;
+            video.autoplay = true;
+            video.loop = false;
+            video.muted = true;
+            video.playsInline = true;
+            video.onerror = () => {
+                if (src === currentVideoSrc) {
+                    console.warn(`技能视频 ${videoFile} 加载失败，尝试使用默认视频 season.mp4`);
+                    tryPlay(fallbackVideoSrc);
+                } else {
+                    console.error(`默认视频 season.mp4 也加载失败`);
+                    if (videoPlace) videoPlace.style.display = 'none';
+                }
+            };
+            video.oncanplay = () => {
+                video.play().catch(err => {
+                    console.warn(`视频自动播放失败: ${src}`, err);
+                    if (videoPlace) videoPlace.style.display = 'none';
+                });
+            };
+        };
+        tryPlay(currentVideoSrc);
         videoPlace.appendChild(video);
         videoPlace.style.display = 'flex';
         await new Promise(r => setTimeout(r, 400));
@@ -449,8 +408,7 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
     }
     await new Promise(r => setTimeout(r, 500));
     if (window.skipRequested) {
-        clone.remove();
-        attackerAvatar.style.opacity = originalOpacity;
+        clone.remove(); attackerAvatar.style.opacity = originalOpacity;
         if (attackerCard) attackerCard.style.display = originalCardDisplay;
         if (videoPlace) videoPlace.style.display = 'none';
         return;
@@ -463,8 +421,7 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
     if (skillType) applySkillEffect(skillType, targetAvatar, attackerAvatar, skillName);
     await new Promise(r => setTimeout(r, 900));
     if (window.skipRequested) {
-        clone.remove();
-        attackerAvatar.style.opacity = originalOpacity;
+        clone.remove(); attackerAvatar.style.opacity = originalOpacity;
         if (attackerCard) attackerCard.style.display = originalCardDisplay;
         targetAvatar.src = originalTargetSrc;
         if (videoPlace) videoPlace.style.display = 'none';
@@ -513,14 +470,32 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
             document.body.appendChild(videoPlace);
         }
         videoPlace.innerHTML = '';
+        let currentVideoSrc = `/static/videos/${videoFile}`;
+        let fallbackVideoSrc = '/static/videos/season.mp4';
         let video = document.createElement('video');
-        video.src = `/static/videos/${videoFile}`;
-        video.autoplay = true;
-        video.loop = false;
-        video.muted = true;
-        video.playsInline = true;
-        video.onerror = (e) => { console.error(`视频加载失败: ${videoFile}`, e); if (videoPlace) videoPlace.style.display = 'none'; };
-        video.oncanplay = () => { video.play().catch(err => { console.warn(`视频自动播放失败: ${videoFile}`, err); if (videoPlace) videoPlace.style.display = 'none'; }); };
+        const tryPlay = (src) => {
+            video.src = src;
+            video.autoplay = true;
+            video.loop = false;
+            video.muted = true;
+            video.playsInline = true;
+            video.onerror = () => {
+                if (src === currentVideoSrc) {
+                    console.warn(`技能视频 ${videoFile} 加载失败，尝试使用默认视频 season.mp4`);
+                    tryPlay(fallbackVideoSrc);
+                } else {
+                    console.error(`默认视频 season.mp4 也加载失败`);
+                    if (videoPlace) videoPlace.style.display = 'none';
+                }
+            };
+            video.oncanplay = () => {
+                video.play().catch(err => {
+                    console.warn(`视频自动播放失败: ${src}`, err);
+                    if (videoPlace) videoPlace.style.display = 'none';
+                });
+            };
+        };
+        tryPlay(currentVideoSrc);
         videoPlace.appendChild(video);
         videoPlace.style.display = 'flex';
     }
@@ -549,7 +524,8 @@ function updateEnemyPlayerAvatar(avatarUrl, playerName) {
     container.innerHTML = '';
     let div = document.createElement('div');
     div.className = 'enemy-avatar-item';
-    div.innerHTML = `<img src="${avatarUrl}" onerror="this.src='/static/images/heroes/hero.png'"><div class="enemy-hp">${playerName}</div>`;
+    let imgSrc = avatarUrl ? avatarUrl : '/static/images/avatars/hero.png';
+    div.innerHTML = `<img src="${imgSrc}" onerror="this.src='/static/images/heroes/hero.png'"><div class="enemy-hp">${playerName || '敌方'}</div>`;
     container.appendChild(div);
 }
 
@@ -615,6 +591,7 @@ function updateHeroHpBar(team, heroName, currentHp, maxHp) {
     }
 }
 
+// ========== 核心战斗动画 + 日志文字输出 ==========
 async function playBattleLogWithDelay(log, winner) {
     if (window.currentAnimationPromise) {
         window.skipRequested = true;
@@ -633,59 +610,143 @@ async function playBattleLogWithDelay(log, winner) {
     window.isFighting = true;
 
     window.currentAnimationPromise = (async () => {
-        for (let i = 0; i < log.length; i++) {
-            if (window.skipRequested || !window.isFighting) {
-                if (typeof addLog === 'function') addLog("⏩ 战斗已中断，直接结算...");
-                let videoPlace = document.getElementById('skillVideoPlaceholder');
-                if (videoPlace) videoPlace.style.display = 'none';
-                if (typeof window.playBgMusic === 'function') window.playBgMusic();
-                applyFinalHp(log, winner);
-                if (battleCallback) battleCallback(winner);
-                hideBattlePanel();
-                window.isFighting = false;
-                window.currentAnimationPromise = null;
-                window.skipRequested = false;
-                return;
-            }
-            let entry = log[i];
-            if (entry.type === 'attack' || entry.type === 'skill') {
-                if (entry.type === 'attack') {
-                    let attackerName = entry.attacker;
-                    let targetName = entry.target;
-                    let damage = entry.damage || 0;
-                    if (typeof addLog === 'function') addLog(`${attackerName} 攻击 ${targetName} 造成 ${damage} 伤害${entry.dead ? '，目标死亡！' : ''}`);
-                    let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
-                    let targetAvatar = getHeroAvatarDiv(entry.target_team, targetName);
-                    highlightHero(attackerAvatar, 500);
-                    let attackerId = getHeroId(attackerName, {});
-                    if (attackerAvatar && targetAvatar) {
-                        let targetId = getHeroId(targetName, {});
-                        await animateSingleAttack(attackerId, attackerAvatar, targetAvatar, damage, 'physical', false, targetId, '');
-                    } else {
-                        await new Promise(r => setTimeout(r, 1400));
-                    }
-                    let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
-                    let hero = targetTeam.find(h => h.name === targetName);
-                    if (hero) {
-                        hero.hp = Math.min(hero.maxHp, Math.max(0, entry.hp_left));
-                        updateHeroHpBar(entry.target_team, targetName, hero.hp, hero.maxHp);
-                    }
-                } else if (entry.type === 'skill') {
-                    let attackerName = entry.attacker;
-                    let skillName = entry.skill;
-                    let skillType = entry.skill_type;
-                    // 添加文字日志（根据技能类型）
-                    if (typeof addLog === 'function') {
-                        if (entry.is_multi && entry.targets) {
-                            let totalDamage = entry.targets.reduce((sum, t) => sum + (t.damage || 0), 0);
-                            if (skillType === 'heal') {
-                                addLog(`${attackerName} 使用 ${skillName} 治疗了多名队友`);
-                            } else if (skillType === 'buff') {
-                                addLog(`${attackerName} 使用 ${skillName} 为全体施加增益`);
-                            } else if (skillType === 'shield') {
-                                addLog(`${attackerName} 使用 ${skillName} 为全体附加护盾`);
+        try {
+            for (let i = 0; i < log.length; i++) {
+                if (window.skipRequested || !window.isFighting) {
+                    if (typeof addLog === 'function') addLog("⏩ 战斗已中断，直接结算...");
+                    let videoPlace = document.getElementById('skillVideoPlaceholder');
+                    if (videoPlace) videoPlace.style.display = 'none';
+                    if (typeof window.playBgMusic === 'function') window.playBgMusic();
+                    applyFinalHp(log, winner);
+                    if (battleCallback) battleCallback(winner);
+                    hideBattlePanel();
+                    return;
+                }
+                let entry = log[i];
+                if (entry.type === 'attack' || entry.type === 'skill') {
+                    if (entry.type === 'attack') {
+                        let attackerName = entry.attacker;
+                        let targetName = entry.target;
+                        let damage = entry.damage || 0;
+                        if (typeof addLog === 'function') {
+                            addLog(`${attackerName} 攻击 ${targetName} 造成 ${damage} 伤害${entry.dead ? '，目标死亡！' : ''}`);
+                        }
+                        let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
+                        let targetAvatar = getHeroAvatarDiv(entry.target_team, targetName);
+                        highlightHero(attackerAvatar, 500);
+                        let attackerId = getHeroId(attackerName, {});
+                        if (attackerAvatar && targetAvatar) {
+                            let targetId = getHeroId(targetName, {});
+                            await animateSingleAttack(attackerId, attackerAvatar, targetAvatar, damage, 'physical', false, targetId, '');
+                        } else {
+                            await new Promise(r => setTimeout(r, 1400));
+                        }
+                        let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
+                        let hero = targetTeam.find(h => h.name === targetName);
+                        if (hero) {
+                            hero.hp = Math.min(hero.maxHp, Math.max(0, entry.hp_left));
+                            updateHeroHpBar(entry.target_team, targetName, hero.hp, hero.maxHp);
+                        }
+                    } else if (entry.type === 'skill') {
+                        let attackerName = entry.attacker;
+                        let skillName = entry.skill;
+                        let skillType = entry.skill_type;
+                        let attackerId = getHeroId(attackerName, {});
+                        
+                        if (typeof addLog === 'function') {
+                            if (entry.is_multi && entry.targets) {
+                                let totalDamage = entry.targets.reduce((sum, t) => sum + (t.damage || 0), 0);
+                                if (skillType === 'heal') {
+                                    addLog(`${attackerName} 使用 ${skillName} 治疗了多名队友`);
+                                } else if (skillType === 'buff') {
+                                    addLog(`${attackerName} 使用 ${skillName} 为全体施加增益`);
+                                } else if (skillType === 'shield') {
+                                    addLog(`${attackerName} 使用 ${skillName} 为全体附加护盾`);
+                                } else {
+                                    addLog(`${attackerName} 使用 ${skillName} 对多名敌人造成 ${totalDamage} 总伤害`);
+                                }
                             } else {
-                                addLog(`${attackerName} 使用 ${skillName} 对多名敌人造成 ${totalDamage} 总伤害`);
+                                let targetName = entry.target;
+                                let damage = entry.damage || 0;
+                                let isHeal = (skillType === 'heal');
+                                let isBuff = (skillType === 'buff');
+                                let isShield = (skillType === 'shield');
+                                if (isHeal) {
+                                    addLog(`${attackerName} 使用 ${skillName} 治疗 ${targetName} ${damage} 生命`);
+                                } else if (isBuff) {
+                                    addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 施加增益`);
+                                } else if (isShield) {
+                                    addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 附加护盾`);
+                                } else {
+                                    addLog(`${attackerName} 使用 ${skillName} 对 ${targetName} 造成 ${damage} 伤害${entry.dead ? '，目标死亡！' : ''}`);
+                                }
+                            }
+                        }
+                        if (entry.is_multi && entry.targets) {
+                            let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
+                            const isNonDamage = (skillType === 'buff' || skillType === 'heal' || skillType === 'shield');
+                            if (isNonDamage) {
+                                if (attackerAvatar) {
+                                    const originalAttackerSrc = attackerAvatar.src;
+                                    attackerAvatar.src = `/static/images/heroes/${attackerId}_attack.png`;
+                                    playSound(`/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
+                                    setTimeout(() => {
+                                        if (attackerAvatar) attackerAvatar.src = originalAttackerSrc;
+                                    }, 1200);
+                                }
+                                showSkillName(skillName, 2000);
+                                if (skillType === 'heal') {
+                                    for (let t of entry.targets) {
+                                        let targetId = getHeroId(t.name, {});
+                                        playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
+                                        let avatar = getHeroAvatarDiv(t.team, t.name);
+                                        if (avatar) showDamageNumber(avatar, t.damage, true);
+                                    }
+                                } else {
+                                    for (let t of entry.targets) {
+                                        let targetId = getHeroId(t.name, {});
+                                        playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.5);
+                                    }
+                                }
+                                for (let t of entry.targets) {
+                                    let avatar = getHeroAvatarDiv(t.team, t.name);
+                                    if (avatar) {
+                                        let container = avatar.closest('.hero-card-mini') || avatar;
+                                        setTimeout(() => {
+                                            if (skillType === 'buff') showStatusIcon(container, 'strength_up', 5000);
+                                            else if (skillType === 'shield') showStatusIcon(container, 'shield', 5000);
+                                        }, 100);
+                                    }
+                                }
+                                await new Promise(r => setTimeout(r, 1500));
+                            } else {
+                                let targetsWithAvatar = [];
+                                for (let t of entry.targets) {
+                                    let avatar = getHeroAvatarDiv(t.team, t.name);
+                                    if (avatar) {
+                                        targetsWithAvatar.push({
+                                            name: t.name,
+                                            id: getHeroId(t.name, {}),
+                                            avatar: avatar,
+                                            hp_left: t.hp_left,
+                                            damage: t.damage,
+                                            dead: t.dead
+                                        });
+                                    }
+                                }
+                                if (attackerAvatar && targetsWithAvatar.length) {
+                                    await animateMultiAttack(attackerId, attackerAvatar, targetsWithAvatar, skillType, skillName);
+                                } else {
+                                    await new Promise(r => setTimeout(r, 1800));
+                                }
+                            }
+                            for (let t of entry.targets) {
+                                let targetTeam = (t.team === 'left') ? leftTeam : rightTeam;
+                                let hero = targetTeam.find(h => h.name === t.name);
+                                if (hero) {
+                                    hero.hp = Math.min(hero.maxHp, Math.max(0, t.hp_left));
+                                    updateHeroHpBar(t.team, t.name, hero.hp, hero.maxHp);
+                                }
                             }
                         } else {
                             let targetName = entry.target;
@@ -693,141 +754,78 @@ async function playBattleLogWithDelay(log, winner) {
                             let isHeal = (skillType === 'heal');
                             let isBuff = (skillType === 'buff');
                             let isShield = (skillType === 'shield');
-                            if (isHeal) {
-                                addLog(`${attackerName} 使用 ${skillName} 治疗 ${targetName} ${damage} 生命`);
-                            } else if (isBuff) {
-                                addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 施加增益`);
-                            } else if (isShield) {
-                                addLog(`${attackerName} 使用 ${skillName} 为 ${targetName} 附加护盾`);
-                            } else {
-                                addLog(`${attackerName} 使用 ${skillName} 对 ${targetName} 造成 ${damage} 伤害${entry.dead ? '，目标死亡！' : ''}`);
-                            }
-                        }
-                    }
-                    if (entry.is_multi && entry.targets) {
-                        let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
-                        let attackerId = getHeroId(attackerName, {});
-                        for (let t of entry.targets) {
-                            let targetTeam = (t.team === 'left') ? leftTeam : rightTeam;
-                            let hero = targetTeam.find(h => h.name === t.name);
-                            if (hero) {
-                                hero.hp = Math.min(hero.maxHp, Math.max(0, t.hp_left));
-                                updateHeroHpBar(t.team, t.name, hero.hp, hero.maxHp);
-                            }
-                        }
-                        const isNonDamage = (skillType === 'buff' || skillType === 'heal' || skillType === 'shield');
-                        if (isNonDamage) {
-                            showSkillName(skillName, 2000);
-                            if (skillType === 'heal') {
-                                playSound(`/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
-                                for (let t of entry.targets) {
-                                    let targetId = getHeroId(t.name, {});
-                                    playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
-                                    let avatar = getHeroAvatarDiv(t.team, t.name);
-                                    if (avatar) showDamageNumber(avatar, t.damage, true);
-                                }
-                            }
-                            for (let t of entry.targets) {
-                                let avatar = getHeroAvatarDiv(t.team, t.name);
-                                if (avatar) {
-                                    let container = avatar.closest('.hero-card-mini') || avatar;
+                            let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
+                            let targetAvatar = getHeroAvatarDiv(entry.target_team, targetName);
+                            highlightHero(attackerAvatar, 500);
+                            if (isBuff || isHeal || isShield) {
+                                if (attackerAvatar) {
+                                    const originalAttackerSrc = attackerAvatar.src;
+                                    attackerAvatar.src = `/static/images/heroes/${attackerId}_attack.png`;
+                                    playSound(`/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
                                     setTimeout(() => {
-                                        if (skillType === 'buff') showStatusIcon(container, 'strength_up', 5000);
-                                        else if (skillType === 'shield') showStatusIcon(container, 'shield', 5000);
+                                        if (attackerAvatar) attackerAvatar.src = originalAttackerSrc;
+                                    }, 1200);
+                                }
+                                showSkillName(skillName, 2000);
+                                if (isHeal) {
+                                    let targetId = getHeroId(targetName, {});
+                                    playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
+                                    if (targetAvatar) showDamageNumber(targetAvatar, damage, true);
+                                } else {
+                                    let targetId = getHeroId(targetName, {});
+                                    playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.5);
+                                }
+                                if (targetAvatar) {
+                                    let container = targetAvatar.closest('.hero-card-mini') || targetAvatar;
+                                    setTimeout(() => {
+                                        if (isBuff) showStatusIcon(container, 'strength_up', 5000);
+                                        else if (isShield) showStatusIcon(container, 'shield', 5000);
                                     }, 100);
                                 }
-                            }
-                            await new Promise(r => setTimeout(r, 1500));
-                        } else {
-                            // 伤害型群体技能：先输出日志（已在上面添加），再播放动画
-                            let targetsWithAvatar = [];
-                            for (let t of entry.targets) {
-                                let avatar = getHeroAvatarDiv(t.team, t.name);
-                                if (avatar) {
-                                    targetsWithAvatar.push({
-                                        name: t.name,
-                                        id: getHeroId(t.name, {}),
-                                        avatar: avatar,
-                                        hp_left: t.hp_left,
-                                        damage: t.damage,
-                                        dead: t.dead
-                                    });
+                                await new Promise(r => setTimeout(r, 1000));
+                                let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
+                                let hero = targetTeam.find(h => h.name === targetName);
+                                if (hero && (isHeal || isShield)) {
+                                    hero.hp = Math.min(hero.maxHp, Math.max(0, entry.hp_left));
+                                    updateHeroHpBar(entry.target_team, targetName, hero.hp, hero.maxHp);
                                 }
-                            }
-                            if (attackerAvatar && targetsWithAvatar.length) {
-                                await animateMultiAttack(attackerId, attackerAvatar, targetsWithAvatar, skillType, skillName);
                             } else {
-                                await new Promise(r => setTimeout(r, 1800));
-                            }
-                        }
-                    } else {
-                        let targetName = entry.target;
-                        let damage = entry.damage || 0;
-                        let isHeal = (skillType === 'heal');
-                        let isBuff = (skillType === 'buff');
-                        let isShield = (skillType === 'shield');
-                        let attackerAvatar = getHeroAvatarDiv(entry.attacker_team, attackerName);
-                        let targetAvatar = getHeroAvatarDiv(entry.target_team, targetName);
-                        highlightHero(attackerAvatar, 500);
-                        if (isBuff || isHeal || isShield) {
-                            showSkillName(skillName, 2000);
-                            if (isHeal) {
-                                let attackerId = getHeroId(attackerName, {});
-                                let targetId = getHeroId(targetName, {});
-                                playSound(`/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
-                                playSound(`/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
-                                if (targetAvatar) showDamageNumber(targetAvatar, damage, true);
-                            }
-                            if (targetAvatar) {
-                                let container = targetAvatar.closest('.hero-card-mini') || targetAvatar;
-                                setTimeout(() => {
-                                    if (isBuff) showStatusIcon(container, 'strength_up', 5000);
-                                    else if (isShield) showStatusIcon(container, 'shield', 5000);
-                                }, 100);
-                            }
-                            await new Promise(r => setTimeout(r, 1000));
-                            let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
-                            let hero = targetTeam.find(h => h.name === targetName);
-                            if (hero && (isHeal || isShield)) {
-                                hero.hp = Math.min(hero.maxHp, Math.max(0, entry.hp_left));
-                                updateHeroHpBar(entry.target_team, targetName, hero.hp, hero.maxHp);
-                            }
-                        } else {
-                            let attackerId = getHeroId(attackerName, {});
-                            if (attackerAvatar && targetAvatar) {
-                                let targetId = getHeroId(targetName, {});
-                                await animateSingleAttack(attackerId, attackerAvatar, targetAvatar, damage, skillType, isHeal, targetId, skillName);
-                            } else {
-                                await new Promise(r => setTimeout(r, 1400));
-                            }
-                            let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
-                            let hero = targetTeam.find(h => h.name === targetName);
-                            if (hero && !isBuff && !isShield && !isHeal) {
-                                hero.hp = Math.min(hero.maxHp, Math.max(0, entry.hp_left));
-                                updateHeroHpBar(entry.target_team, targetName, hero.hp, hero.maxHp);
+                                if (attackerAvatar && targetAvatar) {
+                                    let targetId = getHeroId(targetName, {});
+                                    await animateSingleAttack(attackerId, attackerAvatar, targetAvatar, damage, skillType, false, targetId, skillName);
+                                } else {
+                                    await new Promise(r => setTimeout(r, 1400));
+                                }
+                                let targetTeam = (entry.target_team === 'left') ? leftTeam : rightTeam;
+                                let hero = targetTeam.find(h => h.name === targetName);
+                                if (hero) {
+                                    hero.hp = Math.min(hero.maxHp, Math.max(0, entry.hp_left));
+                                    updateHeroHpBar(entry.target_team, targetName, hero.hp, hero.maxHp);
+                                }
                             }
                         }
                     }
+                } else if (entry.type === 'status') {
+                    if (typeof addLog === 'function') addLog(entry.text);
                 }
-            } else if (entry.type === 'status') {
-                if (typeof addLog === 'function') addLog(entry.text);
+                if ((window.skipRequested || !window.isFighting) && i < log.length - 1) break;
+                if (i < log.length - 1 && !window.skipRequested) await new Promise(r => setTimeout(r, 500));
             }
-            if ((window.skipRequested || !window.isFighting) && i < log.length - 1) break;
-            if (i < log.length - 1 && !window.skipRequested) await new Promise(r => setTimeout(r, 500));
+        } finally {
+            if (!window.skipRequested && window.isFighting) {
+                if (typeof addLog === 'function') addLog(`🏆 战斗结束，胜者: ${winner === 'left' ? '我方' : '敌方'}`);
+                if (battleCallback) battleCallback(winner);
+                if (winner === 'left') { if (typeof window.playWinSound === 'function') window.playWinSound(); }
+                else { if (typeof window.playLoseSound === 'function') window.playLoseSound(); }
+                applyFinalHp(log, winner);
+                hideBattlePanel();
+            } else {
+                hideBattlePanel();
+            }
+            window.isFighting = false;
+            window.currentAnimationPromise = null;
+            window.skipRequested = false;
         }
-        if (!window.skipRequested && window.isFighting) {
-            if (typeof addLog === 'function') addLog(`🏆 战斗结束，胜者: ${winner === 'left' ? '我方' : '敌方'}`);
-            if (battleCallback) battleCallback(winner);
-            if (winner === 'left') { if (typeof window.playWinSound === 'function') window.playWinSound(); }
-            else { if (typeof window.playLoseSound === 'function') window.playLoseSound(); }
-            applyFinalHp(log, winner);
-            hideBattlePanel();
-        } else {
-            hideBattlePanel();
-        }
-        window.isFighting = false;
-        window.currentAnimationPromise = null;
-        window.skipRequested = false;
     })();
     await window.currentAnimationPromise;
 }
@@ -836,12 +834,7 @@ function showBattlePanel(leftTeamData, rightTeamData, logs, winner, leftPower, r
     if (!leftTeamData || !rightTeamData) { if (callback) callback(winner); return; }
     for (let h of leftTeamData) if (h.maxHp > 0) h.hp = h.maxHp;
     for (let h of rightTeamData) if (h.maxHp > 0) h.hp = h.maxHp;
-    if (enemyPlayerName) {
-        let avatarUrl = enemyAvatar || `/static/images/heroes/${enemyPlayerName}.png`;
-        updateEnemyPlayerAvatar(avatarUrl, enemyPlayerName);
-    } else {
-        updateEnemyPlayerAvatar('/static/images/heroes/hero.png', '敌方');
-    }
+    updateEnemyPlayerAvatar(enemyAvatar, enemyPlayerName);
     let friendPanel = document.getElementById('friendPanel');
     if (friendPanel) friendPanel.style.display = 'none';
     let validLogs = logs && logs.length ? logs : [{ type: "status", text: "战斗瞬间结束" }];
@@ -875,10 +868,33 @@ function hideBattlePanel() {
 function renderGrids() {
     renderOneGrid('leftGrid', leftTeam);
     renderOneGrid('rightGrid', rightTeam);
+    
+    // 计算平均等级
+    function calcAvgLevel(team) {
+        if (!team.length) return 0;
+        let total = 0;
+        let count = 0;
+        for (let hero of team) {
+            total += hero.level || 1;
+            count++;
+        }
+        return Math.floor(total / count);
+    }
+    let leftAvg = calcAvgLevel(leftTeam);
+    let rightAvg = calcAvgLevel(rightTeam);
+    
+    // 更新阵营标题
+    let leftTitle = document.querySelector('.left-grid-container .grid-title');
+    let rightTitle = document.querySelector('.right-grid-container .grid-title');
+    if (leftTitle) {
+        leftTitle.innerHTML = `🔥 截教阵营 ${leftAvg > 0 ? `平均Lv.${leftAvg}` : ''}`;
+    }
+    if (rightTitle) {
+        rightTitle.innerHTML = `⚡ 敌方阵营 ${rightAvg > 0 ? `平均Lv.${rightAvg}` : ''}`;
+    }
 }
 
 function renderOneGrid(gridId, team) {
-    if (window.isFighting) { console.warn('[渲染拦截] 战斗进行中，禁止刷新网格'); return; }
     let container = document.getElementById(gridId);
     if (!container) return;
     container.innerHTML = '';
@@ -902,6 +918,7 @@ function renderOneGrid(gridId, team) {
                 let percent = (hero.hp / hero.maxHp) * 100;
                 let isDead = hero.hp <= 0;
                 let avatarUrl = `/static/images/heroes/${hero.id || hero.name}.png`;
+                // 不显示个体等级
                 slot.innerHTML = `
                     <div class="hero-card-mini ${isDead ? 'dead' : ''}">
                         <img class="hero-avatar-mini" src="${avatarUrl}" onerror="this.src='/static/images/heroes/hero.png'">
@@ -971,14 +988,14 @@ window.updateHeroHpBar = updateHeroHpBar;
 window.startPreload = startPreload;
 window.unlockAndDecodeSounds = unlockAndDecodeSounds;
 
-// 页面加载后预加载音效（但不解码，等待用户交互）
+// 页面加载后预加载音效（不自动解码）
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         loadSkillAnimations().then(() => initBattleControls());
-        if (window.currentUser) startPreload().catch(console.warn);
+        if (window.currentUser) { startPreload().catch(console.warn); }
     });
 } else {
     loadSkillAnimations().then(() => initBattleControls());
-    if (window.currentUser) startPreload().catch(console.warn);
+    if (window.currentUser) { startPreload().catch(console.warn); }
 }
 document.body.addEventListener('click', () => { unlockAndDecodeSounds(); }, { once: true });

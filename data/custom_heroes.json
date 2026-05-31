@@ -53,7 +53,7 @@
         "base_id": "shield_all",
         "display_name": "玄甲护体"
       },
-      "weight": 90,
+      "weight": 10,
       "enabled": true
     },
     {
@@ -82,7 +82,13 @@
         "display_name": "金蛟剪",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.6 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.6
+          }
+        ]
       },
       "weight": 95,
       "enabled": true
@@ -99,7 +105,13 @@
         "display_name": "缚龙索",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.6 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.6
+          }
+        ]
       },
       "weight": 95,
       "enabled": true
@@ -115,7 +127,7 @@
         "base_id": "all_enemy_magic",
         "display_name": "定海珠"
       },
-      "weight": 100,
+      "weight": 40,
       "enabled": true
     },
     {
@@ -131,7 +143,7 @@
         "target_type": "ally_lowest_hp",
         "target_count": 3
       },
-      "weight": 90,
+      "weight": 10,
       "enabled": true
     },
     {
@@ -159,7 +171,7 @@
         "base_id": "control_multi",
         "display_name": "魅惑"
       },
-      "weight": 80,
+      "weight": 10,
       "enabled": true
     },
     {
@@ -218,7 +230,13 @@
         "display_name": "遁龙桩",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
       "weight": 85,
       "enabled": true
@@ -235,7 +253,13 @@
         "display_name": "照妖鉴",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
       "weight": 85,
       "enabled": true
@@ -252,7 +276,13 @@
         "display_name": "混元锤",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
       "weight": 85,
       "enabled": true
@@ -268,7 +298,13 @@
         "base_id": "debuff",
         "display_name": "六魂幡",
         "target_type": "all_enemy",
-        "effects": [{ "type": "strength_down", "duration": 2, "probability": 0.8 }]
+        "effects": [
+          {
+            "type": "strength_down",
+            "duration": 2,
+            "probability": 0.8
+          }
+        ]
       },
       "weight": 80,
       "enabled": true
@@ -284,7 +320,7 @@
         "base_id": "hybrid_damage",
         "display_name": "八九玄功"
       },
-      "weight": 95,
+      "weight": 50,
       "enabled": true
     },
     {
@@ -299,9 +335,15 @@
         "display_name": "乾坤圈",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
-      "weight": 95,
+      "weight": 60,
       "enabled": true
     },
     {
@@ -386,7 +428,13 @@
         "display_name": "雌雄双鞭",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
       "weight": 90,
       "enabled": true
@@ -445,7 +493,13 @@
         "display_name": "戮魂幡",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.6 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.6
+          }
+        ]
       },
       "weight": 70,
       "enabled": true
@@ -462,9 +516,15 @@
         "display_name": "五色石",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
-      "weight": 70,
+      "weight": 50,
       "enabled": true
     },
     {
@@ -493,7 +553,13 @@
         "display_name": "打神鞭",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.8 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.8
+          }
+        ]
       },
       "weight": 80,
       "enabled": true
@@ -510,7 +576,13 @@
         "display_name": "阴阳镜",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
       "weight": 75,
       "enabled": true
@@ -541,7 +613,13 @@
         "display_name": "遁龙桩",
         "target_type": "single_enemy",
         "target_count": 1,
-        "effects": [{ "type": "stun", "duration": 1, "probability": 0.7 }]
+        "effects": [
+          {
+            "type": "stun",
+            "duration": 1,
+            "probability": 0.7
+          }
+        ]
       },
       "weight": 80,
       "enabled": true

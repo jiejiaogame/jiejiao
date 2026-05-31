@@ -5,13 +5,13 @@
       "name": "金鳌岛",
       "min_level": 5,
       "nodes": [
-        {"node_id": 1, "main_hero_ids": ["duobao"], "power": 500, "exp": 100, "gold": 200, "drop_rate": 0.3},
-        {"node_id": 2, "main_hero_ids": ["jinling"], "power": 800, "exp": 120, "gold": 250, "drop_rate": 0.3},
-        {"node_id": 3, "main_hero_ids": ["wudang"], "power": 1100, "exp": 140, "gold": 300, "drop_rate": 0.3},
-        {"node_id": 4, "main_hero_ids": ["guiling"], "power": 1400, "exp": 160, "gold": 350, "drop_rate": 0.3},
-        {"node_id": 5, "main_hero_ids": ["yunxiao"], "power": 1700, "exp": 180, "gold": 400, "drop_rate": 0.3},
-        {"node_id": 6, "main_hero_ids": ["zhaogongming"], "power": 2000, "exp": 200, "gold": 450, "drop_rate": 0.3},
-        {"node_id": 7, "main_hero_ids": ["duobao", "jinling"], "power": 2500, "exp": 300, "gold": 600, "drop_rate": 0.4}
+        {"node_id": 1, "main_hero_ids": ["duobao"], "enemy_level": 5, "exp": 50, "gold": 100, "drop_rate": 0.3},
+        {"node_id": 2, "main_hero_ids": ["jinling"], "enemy_level": 7, "exp": 60, "gold": 120, "drop_rate": 0.3},
+        {"node_id": 3, "main_hero_ids": ["wudang"], "enemy_level": 9, "exp": 70, "gold": 150, "drop_rate": 0.3},
+        {"node_id": 4, "main_hero_ids": ["guiling"], "enemy_level": 11, "exp": 80, "gold": 180, "drop_rate": 0.3},
+        {"node_id": 5, "main_hero_ids": ["yunxiao"], "enemy_level": 13, "exp": 90, "gold": 200, "drop_rate": 0.3},
+        {"node_id": 6, "main_hero_ids": ["zhaogongming"], "enemy_level": 14, "exp": 100, "gold": 220, "drop_rate": 0.3},
+        {"node_id": 7, "main_hero_ids": ["duobao", "jinling"], "enemy_level": 15, "exp": 150, "gold": 300, "drop_rate": 0.4}
       ]
     },
     {
@@ -19,13 +19,41 @@
       "name": "三仙岛",
       "min_level": 20,
       "nodes": [
-        {"node_id": 1, "main_hero_ids": ["yunxiao"], "power": 1200, "exp": 150, "gold": 300, "drop_rate": 0.35},
-        {"node_id": 2, "main_hero_ids": ["qiongxiao"], "power": 1600, "exp": 180, "gold": 350, "drop_rate": 0.35},
-        {"node_id": 3, "main_hero_ids": ["bixiao"], "power": 2000, "exp": 210, "gold": 400, "drop_rate": 0.35},
-        {"node_id": 4, "main_hero_ids": ["yunxiao", "qiongxiao"], "power": 2400, "exp": 240, "gold": 480, "drop_rate": 0.35},
-        {"node_id": 5, "main_hero_ids": ["qiongxiao", "bixiao"], "power": 2800, "exp": 270, "gold": 560, "drop_rate": 0.35},
-        {"node_id": 6, "main_hero_ids": ["yunxiao", "bixiao"], "power": 3200, "exp": 300, "gold": 640, "drop_rate": 0.35},
-        {"node_id": 7, "main_hero_ids": ["yunxiao", "qiongxiao", "bixiao"], "power": 4000, "exp": 400, "gold": 800, "drop_rate": 0.45}
+        {"node_id": 1, "main_hero_ids": ["yunxiao"], "enemy_level": 20, "exp": 100, "gold": 200, "drop_rate": 0.35},
+        {"node_id": 2, "main_hero_ids": ["qiongxiao"], "enemy_level": 22, "exp": 120, "gold": 240, "drop_rate": 0.35},
+        {"node_id": 3, "main_hero_ids": ["bixiao"], "enemy_level": 24, "exp": 140, "gold": 280, "drop_rate": 0.35},
+        {"node_id": 4, "main_hero_ids": ["yunxiao", "qiongxiao"], "enemy_level": 26, "exp": 160, "gold": 320, "drop_rate": 0.35},
+        {"node_id": 5, "main_hero_ids": ["qiongxiao", "bixiao"], "enemy_level": 28, "exp": 180, "gold": 360, "drop_rate": 0.35},
+        {"node_id": 6, "main_hero_ids": ["yunxiao", "bixiao"], "enemy_level": 29, "exp": 200, "gold": 400, "drop_rate": 0.35},
+        {"node_id": 7, "main_hero_ids": ["yunxiao", "qiongxiao", "bixiao"], "enemy_level": 30, "exp": 300, "gold": 500, "drop_rate": 0.45}
+      ]
+    },
+    {
+      "id": "yuxu",
+      "name": "玉虚宫",
+      "min_level": 35,
+      "nodes": [
+        {"node_id": 1, "main_hero_ids": ["yunxiao"], "enemy_level": 35, "exp": 200, "gold": 400, "drop_rate": 0.4},
+        {"node_id": 2, "main_hero_ids": ["qiongxiao"], "enemy_level": 37, "exp": 240, "gold": 480, "drop_rate": 0.4},
+        {"node_id": 3, "main_hero_ids": ["bixiao"], "enemy_level": 39, "exp": 280, "gold": 560, "drop_rate": 0.4},
+        {"node_id": 4, "main_hero_ids": ["yangjian"], "enemy_level": 41, "exp": 320, "gold": 640, "drop_rate": 0.4},
+        {"node_id": 5, "main_hero_ids": ["zhaogongming"], "enemy_level": 43, "exp": 360, "gold": 720, "drop_rate": 0.4},
+        {"node_id": 6, "main_hero_ids": ["duobao"], "enemy_level": 44, "exp": 400, "gold": 800, "drop_rate": 0.4},
+        {"node_id": 7, "main_hero_ids": ["duobao", "yunxiao"], "enemy_level": 45, "exp": 500, "gold": 1000, "drop_rate": 0.5}
+      ]
+    },
+    {
+      "id": "bajing",
+      "name": "八景宫",
+      "min_level": 50,
+      "nodes": [
+        {"node_id": 1, "main_hero_ids": ["yangjian"], "enemy_level": 50, "exp": 300, "gold": 600, "drop_rate": 0.45},
+        {"node_id": 2, "main_hero_ids": ["duobao"], "enemy_level": 52, "exp": 360, "gold": 720, "drop_rate": 0.45},
+        {"node_id": 3, "main_hero_ids": ["yunxiao"], "enemy_level": 54, "exp": 420, "gold": 840, "drop_rate": 0.45},
+        {"node_id": 4, "main_hero_ids": ["zhaogongming"], "enemy_level": 56, "exp": 480, "gold": 960, "drop_rate": 0.45},
+        {"node_id": 5, "main_hero_ids": ["jiangziya"], "enemy_level": 58, "exp": 540, "gold": 1080, "drop_rate": 0.45},
+        {"node_id": 6, "main_hero_ids": ["taiyi"], "enemy_level": 59, "exp": 600, "gold": 1200, "drop_rate": 0.45},
+        {"node_id": 7, "main_hero_ids": ["yangjian", "duobao"], "enemy_level": 60, "exp": 700, "gold": 1400, "drop_rate": 0.55}
       ]
     }
   ]

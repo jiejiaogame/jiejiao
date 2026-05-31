@@ -1,4 +1,4 @@
-# web.py - 完整版（含天骄榜、音量持久化、战力自动更新）
+# web.py - 最终完整版（占领无倒计时，祈愿无祝福）
 import asyncio
 import json
 import random
@@ -36,15 +36,66 @@ from friend import (
 from battle_engine import auto_battle, calculate_team_power, calculate_hero_power
 from challenge import router as challenge_router
 
+
 # ---------- 禁言字典 ----------
 muted_users = {}
 
-# ---------- 生命周期 ----------
+# ---------- 占领倒计时监控任务（已注释，不再使用）----------
+# async def check_occupation_expiry():
+#     try:
+#         while True:
+#             await asyncio.sleep(1)
+#             now = datetime.now()
+#             conn = sqlite3.connect(DB_PATH)
+#             c = conn.cursor()
+#             c.execute("SELECT username, occupied_by, occupied_time FROM users WHERE occupied_by IS NOT NULL AND occupied_time IS NOT NULL")
+#             rows = c.fetchall()
+#             for target, occupier, time_str in rows:
+#                 if not time_str:
+#                     continue
+#                 try:
+#                     occupied_dt = datetime.fromisoformat(time_str)
+#                     elapsed = (now - occupied_dt).total_seconds()
+#                     if elapsed >= 600:
+#                         release_user(target)
+#                         # 通知占领者
+#                         if occupier in users_ws:
+#                             try:
+#                                 await users_ws[occupier].send_text(json.dumps({
+#                                     "type": "occupy_expired",
+#                                     "target": target
+#                                 }))
+#                             except:
+#                                 pass
+#                         # 通知被占领者
+#                         if target in users_ws:
+#                             try:
+#                                 await users_ws[target].send_text(json.dumps({
+#                                     "type": "occupy_released",
+#                                     "by": occupier
+#                                 }))
+#                             except:
+#                                 pass
+#                 except Exception as e:
+#                     print(f"检查占领到期错误: {e}")
+#             conn.close()
+#     except asyncio.CancelledError:
+#         print("占领倒计时监控任务已取消")
+#         raise
+
+# ---------- 生命周期（支持优雅关闭，并设置异常处理器）----------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    asyncio.create_task(daily_reset())
+    # 仅保留后台任务，移除异常处理器设置
+    daily_task = asyncio.create_task(daily_reset())
     print("✅ 每日重置任务已启动")
     yield
+    daily_task.cancel()
+    try:
+        await daily_task
+    except asyncio.CancelledError:
+        pass
+    print("✅ 所有后台任务已停止")
 
 app = FastAPI(title="截教卡牌对战", lifespan=lifespan)
 
@@ -66,7 +117,6 @@ async def broadcast_all(msg_dict):
             pass
 
 recruit.set_broadcast_all_func(broadcast_all)
-
 async def broadcast(room_id: str, msg: dict):
     if room_id not in rooms:
         return
@@ -215,7 +265,6 @@ def get_user_team(username: str, formation_type: str = "normal") -> list:
             "speed": speed
         }
         
-        # 应用临时buff（全属性+10%）
         if has_temp_buff(username):
             for k in final_attrs:
                 final_attrs[k] = int(final_attrs[k] * 1.1)
@@ -242,7 +291,7 @@ def get_user_team(username: str, formation_type: str = "normal") -> list:
             "maxHp": 100,
             "star": 1,
             "final_attrs": {"hp": 100, "strength": 10, "intelligence": 10, "speed": 20},
-            "skill": None
+            "skill": {"base_id": "control", "display_name": "祈求"}
         })
     return team
 
@@ -264,7 +313,6 @@ def get_user_power(username: str) -> int:
             "skill": t.get("skill")
         })
     return calculate_team_power(heroes_for_power)
-
 # ---------- HTTP 路由 ----------
 @app.get("/")
 async def index():
@@ -278,6 +326,8 @@ async def register(req: Request):
     e = data.get("email")
     if not u or not p or not e:
         return {"success": False, "msg": "所有字段都不能为空"}
+    if len(u) > 5:
+        return {"success": False, "msg": "用户名不能超过5个汉字或字符"}
     if not is_valid_email(e):
         return {"success": False, "msg": "邮箱格式不正确"}
     if create_user(u, p, e):
@@ -297,7 +347,7 @@ async def register(req: Request):
                       (json.dumps(heroes), json.dumps(star_heroes), u))
             conn.commit()
             conn.close()
-        update_user_power(u)  # 初始化战力
+        update_user_power(u)
         return {"success": True, "msg": "注册成功", "gift_hero": gift_hero["name"] if gift_hero else None}
     else:
         return {"success": False, "msg": "用户名已存在"}
@@ -323,7 +373,7 @@ async def login(req: Request):
         conn.commit()
         get_daily_tasks_progress(u)
     conn.close()
-    update_user_power(u)  # 登录时更新战力
+    update_user_power(u)
     return {"success": True, "msg": "登录成功", "is_admin": (u == "GM01"), "daily_reward": reward}
 
 @app.get("/user_resources")
@@ -538,7 +588,6 @@ async def dismiss_hero(req: Request):
     conn.close()
     update_user_power(username)
     return {"success": True, "msg": f"遣散成功，获得 {refund_exp} 经验药水", "refund_exp": refund_exp}
-
 @app.post("/save_formation")
 async def save_formation_route(req: Request):
     data = await req.json()
@@ -558,6 +607,16 @@ async def save_formation_route(req: Request):
     active_slots = FORMATION_SLOTS.get(formation_type, FORMATION_SLOTS["normal"])
     formation = [f for f in formation if f.get("position") in active_slots]
     save_formation(username, formation_type, formation)
+    save_formation_type(username, formation_type)
+    return {"success": True}
+
+@app.post("/save_formation_type")
+async def save_formation_type_route(req: Request):
+    data = await req.json()
+    username = data.get("username")
+    formation_type = data.get("formation_type")
+    if not username or not formation_type:
+        return {"success": False, "msg": "参数不足"}
     save_formation_type(username, formation_type)
     return {"success": True}
 
@@ -722,18 +781,13 @@ async def occupy_friend(req: Request):
     data = await req.json()
     username = data.get("username")
     friend = data.get("friend")
-    print(f"[DEBUG] 占领请求: {username} 试图占领 {friend}")
     friends = get_friends(username)
     friend_names = [f["name"] for f in friends]
-    print(f"[DEBUG] 好友列表: {friend_names}")
     if friend not in friend_names:
         return {"success": False, "msg": "不是好友"}
     occ = is_occupied(friend)
-    print(f"[DEBUG] is_occupied({friend}) = {occ}")
     if occ:
-        occupier = get_occupier(friend)
-        print(f"[DEBUG] 当前占领者: {occupier}")
-        return {"success": False, "msg": f"该好友已被占领（实际占领者：{occupier}）"}
+        return {"success": False, "msg": "该好友已被占领"}
     formation_type = get_formation_type(username)
     player_team = get_user_team(username, formation_type)
     opponent_formation = get_formation_type(friend)
@@ -741,6 +795,27 @@ async def occupy_friend(req: Request):
     result = auto_battle(player_team, friend_team)
     if result["winner"] == "left":
         occupy_user(username, friend)
+        # 实时通知双方占领状态变化
+        if username in users_ws:
+            try:
+                await users_ws[username].send_text(json.dumps({
+                    "type": "occupy_change",
+                    "target": friend,
+                    "occupied": True,
+                    "by": username
+                }))
+            except:
+                pass
+        if friend in users_ws:
+            try:
+                await users_ws[friend].send_text(json.dumps({
+                    "type": "occupy_change",
+                    "target": friend,
+                    "occupied": True,
+                    "by": username
+                }))
+            except:
+                pass
         return {"success": True, "msg": f"占领成功！{friend} 已成为你的分舵"}
     else:
         return {"success": False, "msg": "占领失败"}
@@ -953,27 +1028,14 @@ async def get_occupied_info(username: str, target: str):
     if not user_target:
         return {"success": False, "msg": "目标不存在"}
     occupier = user_target.get("occupied_by")
-    occupied_time = user_target.get("occupied_time")
+    # 不再返回倒计时相关信息
     is_occupied_by_me = (occupier == username)
-    remain_seconds = 0
-    can_recruit = False
-    if is_occupied_by_me and occupied_time:
-        try:
-            dt = datetime.fromisoformat(occupied_time)
-            elapsed = (datetime.now() - dt).total_seconds()
-            if elapsed >= 600:
-                can_recruit = True
-            else:
-                remain_seconds = int(600 - elapsed)
-        except:
-            pass
     return {
         "success": True,
         "isOccupiedByMe": is_occupied_by_me,
-        "canRecruit": can_recruit,
-        "remainSeconds": remain_seconds
+        "canRecruit": is_occupied_by_me,  # 占领者始终可以招募
+        "remainSeconds": 0
     }
-
 @app.get("/avatar_list")
 async def avatar_list():
     path = "static/images/avatars"
@@ -1006,7 +1068,6 @@ async def daily_rank():
     conn.close()
     return {"success": True, "rank": [{"name": r[0], "avatar": r[1], "gold": r[2]} for r in rows]}
 
-# ========== 天骄榜 API ==========
 @app.get("/rank/power")
 async def power_rank(username: str = None):
     conn = sqlite3.connect(DB_PATH)
@@ -1026,7 +1087,6 @@ async def power_rank(username: str = None):
     conn.close()
     return {"success": True, "rank": rank_list, "my_power": my_power, "my_rank": my_rank}
 
-# ========== 音量持久化 ==========
 @app.post("/set_volume")
 async def set_volume(req: Request):
     data = await req.json()
@@ -1160,7 +1220,7 @@ async def buy_gem(req: Request):
     conn.close()
     
     update_task_progress(username, "shop", 1)
-    update_user_power(username)  # 宝石可能影响战力
+    update_user_power(username)
     return {"success": True, "msg": f"成功购买{quantity}颗{gem_type}宝石"}
 
 @app.get("/daily_tasks")
@@ -1218,20 +1278,10 @@ async def get_skill_animations():
     except FileNotFoundError:
         return {}
 
+# ========== 祈愿系统（无祝福效果）==========
 @app.get("/pray/status")
 async def pray_status(username: str):
     status = get_pray_status(username)
-    # 计算剩余秒数
-    remain_seconds = 0
-    if status.get("hasBuff") and status.get("buffExpire"):
-        try:
-            expire = datetime.fromisoformat(status["buffExpire"])
-            now = datetime.now()
-            if expire > now:
-                remain_seconds = int((expire - now).total_seconds())
-        except:
-            pass
-    status["remain_seconds"] = remain_seconds
     return {"success": True, **status}
 
 @app.post("/pray/burn_incense")
@@ -1243,11 +1293,11 @@ async def burn_incense(req: Request):
     conn = sqlite3.connect(DB_PATH, timeout=5.0)
     c = conn.cursor()
     try:
-        c.execute("SELECT gold, heroes, star_heroes, items, pray_count, pray_date, temp_buff_expire FROM users WHERE username=?", (username,))
+        c.execute("SELECT gold, heroes, star_heroes, items, pray_count, pray_date FROM users WHERE username=?", (username,))
         row = c.fetchone()
         if not row:
             return {"success": False, "msg": "用户不存在"}
-        gold, heroes_json, star_heroes_json, items_json, pray_count, pray_date, temp_buff_expire = row
+        gold, heroes_json, star_heroes_json, items_json, pray_count, pray_date = row
         gold = int(gold) if gold else 0
         heroes = json.loads(heroes_json) if heroes_json else []
         star_heroes = json.loads(star_heroes_json) if star_heroes_json else {}
@@ -1260,38 +1310,11 @@ async def burn_incense(req: Request):
         if pray_date != today:
             pray_count = 0
         remain = max(0, 10 - pray_count)
-        is_special = (remain <= 0)
         
         new_gold = gold - 1000
         c.execute("UPDATE users SET gold=? WHERE username=?", (new_gold, username))
         
-        if is_special:
-            has_buff = False
-            if temp_buff_expire:
-                try:
-                    expire_time = datetime.fromisoformat(temp_buff_expire)
-                    if datetime.now() < expire_time:
-                        has_buff = True
-                except:
-                    pass
-            if has_buff:
-                conn.rollback()
-                conn.close()
-                return {"success": False, "msg": "您已有盘古祝福效果，请等待1小时后再来祈愿", "gold": gold}
-            success = random.random() < 0.8
-            if success:
-                expire_time = (datetime.now() + timedelta(hours=1)).isoformat()
-                c.execute("UPDATE users SET temp_buff_expire=? WHERE username=?", (expire_time, username))
-                msg = "祈愿成功！获得盘古祝福（全属性+10%，持续1小时）"
-                reward = {"type": "buff", "duration": 3600}
-            else:
-                msg = "祈愿失败，一无所获"
-                reward = {"type": "none"}
-            conn.commit()
-            conn.close()
-            update_user_power(username)  # buff影响战力
-            return {"success": True, "msg": msg, "reward": reward, "gold": new_gold}
-        
+        # 所有祈愿都按普通随机奖励处理，不再区分特殊祈愿
         reward = None
         msg = ""
         if pray_type == "wealth":
@@ -1355,7 +1378,7 @@ async def burn_incense(req: Request):
         c.execute("UPDATE users SET pray_count=?, pray_date=? WHERE username=?", (pray_count, today, username))
         conn.commit()
         conn.close()
-        update_user_power(username)  # 新武将或经验药水可能影响战力
+        update_user_power(username)
         return {"success": True, "msg": msg, "reward": reward, "gold": new_gold}
     
     except Exception as e:
@@ -1364,7 +1387,7 @@ async def burn_incense(req: Request):
         print(f"祈愿异常: {e}")
         return {"success": False, "msg": "祈愿失败，请稍后重试"}
 
-# ========== WebSocket ==========
+# ========== WebSocket（加入单连接踢出逻辑）==========
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -1379,6 +1402,12 @@ async def websocket_endpoint(websocket: WebSocket):
             if act == "login":
                 username = req.get("uid")
                 if username and get_user(username):
+                    old_ws = users_ws.get(username)
+                    if old_ws and old_ws != websocket:
+                        try:
+                            await old_ws.close(code=1000, reason="新连接代替旧连接")
+                        except:
+                            pass
                     users_ws[username] = websocket
                     await websocket.send_text(json.dumps({"type": "login_ok"}))
                 else:
@@ -1587,19 +1616,12 @@ async def get_occupied_list(username: str):
     result = []
     for row in rows:
         occupied_name = row[0]
-        occupied_time = row[2]
-        remain = 600
-        if occupied_time:
-            try:
-                elapsed = (datetime.now() - datetime.fromisoformat(occupied_time)).total_seconds()
-                remain = max(0, 600 - int(elapsed))
-            except:
-                pass
+        # 不再返回剩余时间，前端无需倒计时
         result.append({
             "name": occupied_name,
             "avatar": get_user(occupied_name).get("avatar", "hero.png"),
-            "remain_seconds": remain,
-            "expired": remain <= 0
+            "remain_seconds": 0,
+            "expired": False
         })
     return {"success": True, "list": result}
 

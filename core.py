@@ -1,6 +1,8 @@
-# core.py - 完整版（含战力字段、音量字段、祈愿祝福、每日任务、宝石、占领等）
-# 修复：保证所有生命值计算结果至少为 1
-
+# core.py - 完整版（含战力字段、音量字段、祈愿祝福（已移除祝福效果）、每日任务、宝石、占领等）
+# 修复：保证所有生命值计算结果至少为 1，并增加用户名长度限制（最长5个字符）
+# 新增：auto_allocate_free_points, generate_enemy_hero 用于副本敌将生成
+# 加上这行
+from typing import Dict
 import asyncio
 import sqlite3
 import json
@@ -10,7 +12,9 @@ import copy
 from datetime import datetime, timedelta
 
 DB_PATH = "honghuang.db"
-
+# core.py 里必须有这个全局变量
+users_ws = dict()
+rooms = dict()
 # ---------- 密码哈希 ----------
 def hash_pwd(pwd: str) -> str:
     return hashlib.sha256(pwd.encode()).hexdigest()
@@ -185,6 +189,8 @@ def save_user_items(username: str, items: dict):
     conn.close()
 
 def create_user(username: str, password: str, email: str) -> bool:
+    if len(username) > 5:
+        return False
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT username FROM users WHERE username=?", (username,))
@@ -531,6 +537,7 @@ def occupy_user(occupier: str, target: str):
     now = datetime.now().isoformat()
     c.execute("UPDATE users SET occupied_by=?, occupied_time=? WHERE username=?", (occupier, now, target))
     conn.commit()
+    print(f"[OCCUPY] {occupier} -> {target} at {now}")
     conn.close()
 
 def release_user(target: str):
@@ -538,6 +545,7 @@ def release_user(target: str):
     c = conn.cursor()
     c.execute("UPDATE users SET occupied_by=NULL, occupied_time=NULL WHERE username=?", (target,))
     conn.commit()
+    print(f"[RELEASE] {target} released")
     conn.close()
 
 def is_occupied(username: str) -> bool:
@@ -662,29 +670,18 @@ def update_task_progress(username: str, task_id: str, increment: int = 1):
     conn.commit()
     conn.close()
 
-# ---------- 祈愿系统 ----------
+# ---------- 祈愿系统（无祝福效果）----------
 def get_pray_status(username: str) -> dict:
     user = get_user(username)
     if not user:
-        return {"remainCount": 0, "hasBuff": False, "buffExpire": None}
+        return {"remainCount": 0}
     today = datetime.now().strftime("%Y-%m-%d")
     pray_date = user.get("pray_date", "")
     pray_count = user.get("pray_count", 0)
     if pray_date != today:
         pray_count = 0
     remain = max(0, 10 - pray_count)
-    buff_expire = user.get("temp_buff_expire")
-    has_buff = False
-    expire_str = None
-    if buff_expire:
-        try:
-            expire_time = datetime.fromisoformat(buff_expire)
-            if datetime.now() < expire_time:
-                has_buff = True
-                expire_str = buff_expire
-        except:
-            pass
-    return {"remainCount": remain, "hasBuff": has_buff, "buffExpire": expire_str}
+    return {"remainCount": remain}
 
 def update_pray_count(username: str):
     conn = sqlite3.connect(DB_PATH, timeout=5.0)
@@ -708,23 +705,10 @@ def update_pray_count(username: str):
         conn.close()
 
 def set_temp_buff(username: str, duration_hours: int = 1):
-    expire_time = datetime.now() + timedelta(hours=duration_hours)
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("UPDATE users SET temp_buff_expire=? WHERE username=?", (expire_time.isoformat(), username))
-    conn.commit()
-    conn.close()
+    pass
 
 def has_temp_buff(username: str) -> bool:
-    user = get_user(username)
-    buff_expire = user.get("temp_buff_expire")
-    if not buff_expire:
-        return False
-    try:
-        expire_time = datetime.fromisoformat(buff_expire)
-        return datetime.now() < expire_time
-    except:
-        return False
+    return False
 
 # ---------- 战力更新（天骄榜）----------
 def update_user_power(username: str):
@@ -760,7 +744,6 @@ def update_user_power(username: str):
                 "bonus_attrs": bonus,
                 "skill": hero_info.get("skill")
             }
-            # 宝石加成暂不计入战力（简化），若要精确可扩展
             power_val = calculate_hero_power(temp_hero)
             hero_powers.append(power_val)
         hero_powers.sort(reverse=True)
@@ -785,57 +768,31 @@ def get_volume(username: str) -> int:
 
 # ---------- 生命值计算辅助函数（修复版：确保至少1） ----------
 def calculate_hero_max_hp(hero_info: dict, star: int, level: int, bonus_hp: int = 0, gem_hp_bonus: int = 0) -> int:
-    """
-    计算武将最大生命值
-    hero_info: 武将基础数据（包含 star5_hp 等）
-    star: 当前星级 (1-5)
-    level: 当前等级 (1-100)
-    bonus_hp: 自由加点提供的生命值加成
-    gem_hp_bonus: 宝石提供的生命值加成
-    """
-    # 获取当前星级的基础生命值
     base_key = f"star{star}_hp"
     base_hp = hero_info.get(base_key, hero_info.get("star5_hp", 100))
-    
-    # 每级成长系数（线性增长，1级为基础值，100级约为基础值的2倍）
-    growth_factor = 1 + (level - 1) / 99  # 1级=1.0，100级=2.0
+    growth_factor = 1 + (level - 1) / 99
     hp_from_level = int(base_hp * growth_factor)
-    
-    # 加上自由加点加成和宝石加成
     total_hp = hp_from_level + bonus_hp + gem_hp_bonus
-    
-    return max(1, total_hp)  # 确保至少1点生命
+    return max(1, total_hp)
 
 def calculate_hero_current_hp(hero_info: dict, star: int, level: int, current_hp_ratio: float = 1.0, 
                                bonus_hp: int = 0, gem_hp_bonus: int = 0) -> int:
-    """
-    计算武将当前生命值
-    current_hp_ratio: 当前血量比例 (0.0-1.0)，用于战斗后恢复场景
-    """
     max_hp = calculate_hero_max_hp(hero_info, star, level, bonus_hp, gem_hp_bonus)
     return int(max_hp * current_hp_ratio)
 
 def get_hero_max_hp_from_user(username: str, hero_name: str) -> int:
-    """
-    从用户数据中获取指定武将的最大生命值
-    """
     user = get_user(username)
     if not user:
         return 0
-    
-    # 加载武将基础数据
     heroes_db = load_heroes_db()
     hero_map = {h["name"]: h for h in heroes_db.get("heroes", [])}
     hero_info = hero_map.get(hero_name)
     if not hero_info:
         return 0
-    
     star = user.get("star_heroes", {}).get(hero_name, 1)
     level = user.get("hero_level", {}).get(hero_name, 1)
     bonus_attrs = user.get("hero_bonus_attrs", {}).get(hero_name, {})
     bonus_hp = bonus_attrs.get("hp", 0)
-    
-    # 计算宝石生命加成
     hero_gems = user.get("hero_gems", {}).get(hero_name, [])
     gem_hp_bonus = 0
     for gem_id in hero_gems:
@@ -847,16 +804,11 @@ def get_hero_max_hp_from_user(username: str, hero_name: str) -> int:
                     gem_hp_bonus += gem.get("value", 0)
                 if gem.get("double_attr") and gem["double_attr"].get("attr") == "hp":
                     gem_hp_bonus += gem["double_attr"].get("value", 0)
-    
     return calculate_hero_max_hp(hero_info, star, level, bonus_hp, gem_hp_bonus)
 
 def get_team_total_hp(username: str, formation: list = None) -> int:
-    """
-    获取玩家出战队伍的总生命值
-    """
     if formation is None:
         formation = get_formation_legacy(username)
-    
     total_hp = 0
     for hero_name in formation:
         if hero_name:
@@ -864,16 +816,101 @@ def get_team_total_hp(username: str, formation: list = None) -> int:
     return total_hp
 
 def apply_damage_to_hero(hero_current_hp: int, damage: int) -> int:
-    """
-    对武将造成伤害，返回新的当前生命值（不低于0）
-    """
     return max(0, hero_current_hp - damage)
 
 def heal_hero(hero_current_hp: int, hero_max_hp: int, heal_amount: int) -> int:
-    """
-    治疗武将，返回新的当前生命值（不超过最大生命值）
-    """
     return min(hero_max_hp, hero_current_hp + heal_amount)
+
+# ========== 副本敌将生成（与玩家统一成长） ==========
+def auto_allocate_free_points(level: int) -> dict:
+    """
+    根据等级自动分配自由属性点（每10级获得5点，平均分配到四维）
+    返回 bonus_attrs 字典（生命每点+10，其他属性每点+1）
+    """
+    total_points = (level // 10) * 5
+    if total_points <= 0:
+        return {"hp": 0, "strength": 0, "intelligence": 0, "speed": 0}
+    
+    base = total_points // 4
+    remainder = total_points % 4
+    attrs = ["hp", "strength", "intelligence", "speed"]
+    points = {attr: base for attr in attrs}
+    for i in range(remainder):
+        points[attrs[i]] += 1
+    
+    return {
+        "hp": points["hp"] * 10,
+        "strength": points["strength"],
+        "intelligence": points["intelligence"],
+        "speed": points["speed"]
+    }
+
+def get_final_attrs(hero: Dict) -> Dict:
+    """
+    根据星级、等级、基础属性和自由加成计算最终属性
+    hero 应包含：star, level, base_attrs, bonus_attrs
+    """
+    star = hero.get('star', 1)
+    level = hero.get('level', 1)
+    base = hero.get('base_attrs', {})
+    bonus = hero.get('bonus_attrs', {})
+
+    auto_hp = star * 0.5 * (level - 1)
+    auto_str = star * 0.2 * (level - 1)
+    auto_int = star * 0.2 * (level - 1)
+    auto_spd = star * 0.15 * (level - 1)
+
+    final = {
+        'hp': max(1, int(base.get('hp', 30) + bonus.get('hp', 0) + auto_hp)),
+        'strength': max(0, int(base.get('strength', 10) + bonus.get('strength', 0) + auto_str)),
+        'intelligence': max(0, int(base.get('intelligence', 10) + bonus.get('intelligence', 0) + auto_int)),
+        'speed': max(0, int(base.get('speed', 20) + bonus.get('speed', 0) + auto_spd))
+    }
+    return final
+
+def generate_enemy_hero(hero_id: str, level: int, star: int = 5) -> dict:
+    """
+    根据武将ID、等级、星级生成完整的敌方武将数据
+    包含最终属性、当前血量等，可直接用于战斗
+    """
+    from web import load_heroes_db
+    heroes_db = load_heroes_db()
+    hero_info = next((h for h in heroes_db["heroes"] if h["id"] == hero_id), None)
+    if not hero_info:
+        raise ValueError(f"Unknown hero id: {hero_id}")
+    
+    base_attrs = {
+        "hp": hero_info["star5_hp"],
+        "strength": hero_info["star5_strength"],
+        "intelligence": hero_info["star5_intelligence"],
+        "speed": hero_info["star5_speed"]
+    }
+    
+    bonus_attrs = auto_allocate_free_points(level)
+    
+    hero_for_calc = {
+        "star": star,
+        "level": level,
+        "base_attrs": base_attrs,
+        "bonus_attrs": bonus_attrs
+    }
+    final_attrs = get_final_attrs(hero_for_calc)
+    
+    max_hp = max(1, final_attrs["hp"])
+    
+    return {
+        "id": hero_info["id"],
+        "name": hero_info["name"],
+        "level": level,
+        "star": star,
+        "base_attrs": base_attrs,
+        "bonus_attrs": bonus_attrs,
+        "final_attrs": final_attrs,
+        "max_hp": max_hp,
+        "current_hp": max_hp,
+        "shield": 0,
+        "skill": hero_info.get("skill"),
+    }
 
 # ---------- 初始化 ----------
 init_db()

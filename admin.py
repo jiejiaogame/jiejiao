@@ -1,23 +1,19 @@
-# admin.py - 完整GM后台（清除占领使用 release_user，支持权重编辑、聊天记录查看、修改玩家密码）
+# admin.py - 完整GM后台（会话级Cookie，关闭浏览器即失效）
 import json
 import os
 import sqlite3
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse
-from core import get_user, hash_pwd, update_user_items, DB_PATH, release_user
+from fastapi import APIRouter, Request, HTTPException, Depends, Cookie, Form, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
+from typing import Optional
+from core import get_user, hash_pwd, DB_PATH, release_user
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-GM_USERNAME = "GM01"
-GM_PASSWORD_HASH = hash_pwd("gm123456")
+ADMIN_PASSWORD = "jiegame01"
+COOKIE_NAME = "gm_auth"
+COOKIE_VALUE = "authorized"
 
 # ---------- 辅助函数 ----------
-def is_gm(username: str, password: str) -> bool:
-    if username != GM_USERNAME:
-        return False
-    user = get_user(username)
-    return user and user["password"] == GM_PASSWORD_HASH
-
 def load_custom_heroes():
     path = "data/custom_heroes.json"
     if not os.path.exists(path):
@@ -81,12 +77,111 @@ def get_all_skills():
     skills = load_skills()
     return skills.get("skills", [])
 
-# ---------- HTML 页面 ----------
-@router.get("/gm")
-async def gm_panel(username: str, password: str):
-    if not is_gm(username, password):
-        raise HTTPException(status_code=403, detail="无权限")
+# ---------- Cookie 验证依赖 ----------
+def verify_gm_cookie(auth: Optional[str] = Cookie(None, alias=COOKIE_NAME)):
+    if auth != COOKIE_VALUE:
+        raise HTTPException(status_code=403, detail="未授权，请先登录管理后台")
+    return True
 
+# ---------- 登录页面 ----------
+LOGIN_PAGE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>GM后台登录</title>
+    <style>
+        body {
+            background: url('/static/images/bg/biyougong.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .login-box {
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid gold;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+        .login-box h2 {
+            color: gold;
+            margin-bottom: 30px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #2c3e2f;
+            border: 1px solid #d99e3e;
+            border-radius: 30px;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: #d99e3e;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .login-box button:hover {
+            background: #c48a2e;
+        }
+        .error-msg {
+            color: #ff6666;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="login-box">
+    <h2>🔧 截教GM后台</h2>
+    <form method="post" action="/admin/gm/login">
+        <input type="password" name="password" placeholder="管理密码" autofocus required>
+        <button type="submit">登 录</button>
+    </form>
+</div>
+</body>
+</html>
+"""
+
+# ---------- 登录验证路由 ----------
+@router.post("/gm/login")
+async def gm_login(password: str = Form(...)):
+    if password == ADMIN_PASSWORD:
+        resp = RedirectResponse(url="/admin/gm", status_code=302)
+        # 不设置 max_age，即为会话 Cookie（关闭浏览器失效）
+        resp.set_cookie(key=COOKIE_NAME, value=COOKIE_VALUE, httponly=True, path="/admin")
+        return resp
+    else:
+        return HTMLResponse(content="<h3 style='color:red;text-align:center'>密码错误！<br><a href='/admin/gm'>返回</a></h3>", status_code=403)
+
+# ---------- 退出登录路由 ----------
+@router.get("/gm/logout")
+async def gm_logout():
+    resp = RedirectResponse(url="/admin/gm", status_code=302)
+    resp.delete_cookie(key=COOKIE_NAME, path="/admin")
+    return resp
+
+# ---------- 管理面板主页 ----------
+@router.get("/gm")
+async def gm_panel(request: Request, auth: Optional[str] = Cookie(None, alias=COOKIE_NAME)):
+    if auth != COOKIE_VALUE:
+        return HTMLResponse(content=LOGIN_PAGE)
+    
     heroes = get_all_heroes()
     users = get_all_users()
     online = get_online_users()
@@ -118,9 +213,11 @@ async def gm_panel(username: str, password: str):
         .modal-content {{ background:#2c3e2f; padding:20px; border-radius:20px; width:80%; max-width:800px; max-height:80%; overflow:auto; }}
         .weight-input {{ width: 60px; }}
         .chat-log-btn {{ background: #5a7a5a; }}
+        .logout-btn {{ position: absolute; top: 20px; right: 20px; background: #8a5a5a; color: white; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer; }}
     </style>
 </head>
 <body>
+<button class="logout-btn" onclick="location.href='/admin/gm/logout'">🚪 退出登录</button>
 <h1>🔧 截教GM后台</h1>
 <div class="tab">
     <button class="tab-btn active" data-tab="players">👥 玩家管理</button>
@@ -315,20 +412,10 @@ async def gm_panel(username: str, password: str):
             alert("密码不能为空");
             return;
         }
-        // 获取当前 GM 的凭证（从 URL 参数中获取）
-        const urlParams = new URLSearchParams(window.location.search);
-        const gmUsername = urlParams.get('username');
-        const gmPassword = urlParams.get('password');
-        if (!gmUsername || !gmPassword) {
-            alert("无法获取 GM 凭证，请重新登录 GM 后台");
-            return;
-        }
         let resp = await fetch('/admin/update_password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                gm_username: gmUsername,
-                gm_password: gmPassword,
                 target_username: username,
                 new_password: newPassword
             })
@@ -433,7 +520,6 @@ async def gm_panel(username: str, password: str):
         else alert(data.msg);
     }
 
-    // 副本管理：新增
     function showAddChallengeForm() {
         document.getElementById('addChallengeForm').style.display = 'block';
         let nodesDiv = document.getElementById('nodes');
@@ -443,6 +529,7 @@ async def gm_panel(username: str, password: str):
                 <div style="border:1px solid #555; margin:10px 0; padding:10px;">
                     <b>节点${i}</b><br>
                     主将ID(多个逗号分隔): <input id="node_main_${i}" placeholder="duobao"><br>
+                    等级: <input id="node_level_${i}" placeholder="1" size="5"><br>
                     战力: <input id="node_power_${i}" placeholder="3000" size="5"><br>
                     经验: <input id="node_exp_${i}" placeholder="100" size="5"><br>
                     金币: <input id="node_gold_${i}" placeholder="500" size="5"><br>
@@ -459,11 +546,12 @@ async def gm_panel(username: str, password: str):
         for(let i=1;i<=7;i++) {
             let mainIds = document.getElementById(`node_main_${i}`).value;
             let ids = mainIds.split(',').map(s=>s.trim()).filter(s=>s);
+            let level = parseInt(document.getElementById(`node_level_${i}`).value) || 1;
             let power = parseInt(document.getElementById(`node_power_${i}`).value) || 0;
             let exp = parseInt(document.getElementById(`node_exp_${i}`).value) || 0;
             let gold = parseInt(document.getElementById(`node_gold_${i}`).value) || 0;
             let drop_rate = parseFloat(document.getElementById(`node_drop_rate_${i}`).value) || 0;
-            nodes.push({node_id: i, main_hero_ids: ids, power: power, exp: exp, gold: gold, drop_rate: drop_rate});
+            nodes.push({node_id: i, main_hero_ids: ids, enemy_level: level, power: power, exp: exp, gold: gold, drop_rate: drop_rate});
         }
         let resp = await fetch('/admin/add_challenge', {
             method: 'POST',
@@ -486,7 +574,6 @@ async def gm_panel(username: str, password: str):
         else alert(data.msg);
     }
 
-    // 副本编辑
     let editingChallengeIndex = -1;
     function editChallenge(index) {
         editingChallengeIndex = index;
@@ -495,12 +582,13 @@ async def gm_panel(username: str, password: str):
         let nodesContainer = document.getElementById('editNodesContainer');
         nodesContainer.innerHTML = '';
         for (let i=1; i<=7; i++) {
-            let node = chal.nodes[i-1] || {main_hero_ids: [], power: 0, exp: 0, gold: 0, drop_rate: 0.3};
+            let node = chal.nodes[i-1] || {main_hero_ids: [], enemy_level: 1, power: 0, exp: 0, gold: 0, drop_rate: 0.3};
             nodesContainer.innerHTML += `
                 <div style="border:1px solid #555; margin:10px 0; padding:10px;">
                     <b>节点${i}</b><br>
                     主将ID(多个逗号分隔): <input id="edit_node_main_${i}" value="${(node.main_hero_ids || []).join(',')}" style="width:100%;"><br>
-                    战力: <input id="edit_node_power_${i}" value="${node.power}" size="5"><br>
+                    等级: <input id="edit_node_level_${i}" value="${node.enemy_level || 1}" size="5"><br>
+                    战力: <input id="edit_node_power_${i}" value="${node.power || 0}" size="5"><br>
                     经验: <input id="edit_node_exp_${i}" value="${node.exp}" size="5"><br>
                     金币: <input id="edit_node_gold_${i}" value="${node.gold}" size="5"><br>
                     宝石掉落概率(0-1): <input id="edit_node_drop_rate_${i}" value="${node.drop_rate}" size="5">
@@ -519,11 +607,12 @@ async def gm_panel(username: str, password: str):
         for (let i=1; i<=7; i++) {
             let mainIds = document.getElementById(`edit_node_main_${i}`).value;
             let ids = mainIds.split(',').map(s=>s.trim()).filter(s=>s);
+            let enemy_level = parseInt(document.getElementById(`edit_node_level_${i}`).value) || 1;
             let power = parseInt(document.getElementById(`edit_node_power_${i}`).value) || 0;
             let exp = parseInt(document.getElementById(`edit_node_exp_${i}`).value) || 0;
             let gold = parseInt(document.getElementById(`edit_node_gold_${i}`).value) || 0;
             let drop_rate = parseFloat(document.getElementById(`edit_node_drop_rate_${i}`).value) || 0;
-            nodes.push({node_id: i, main_hero_ids: ids, power: power, exp: exp, gold: gold, drop_rate: drop_rate});
+            nodes.push({node_id: i, main_hero_ids: ids, enemy_level: enemy_level, power: power, exp: exp, gold: gold, drop_rate: drop_rate});
         }
         let resp = await fetch('/admin/update_challenge', {
             method: 'POST',
@@ -538,7 +627,6 @@ async def gm_panel(username: str, password: str):
         }
     }
 
-    // 技能模板管理
     function showAddSkillForm() { document.getElementById('addSkillForm').style.display = 'block'; }
     function hideAddSkillForm() { document.getElementById('addSkillForm').style.display = 'none'; }
     async function addSkill() {
@@ -567,12 +655,11 @@ async def gm_panel(username: str, password: str):
         else alert(data.msg);
     }
 
-    // 聊天记录查看
     function viewChatLog(username) {
-        window.open('/admin/gm_chat_log?username=GM01&password=gm123456', '_blank');
+        window.open('/admin/gm_chat_log', '_blank');
     }
     function viewFullChatLog() {
-        window.open('/admin/gm_chat_log?username=GM01&password=gm123456', '_blank');
+        window.open('/admin/gm_chat_log', '_blank');
     }
 </script>
 </body>
@@ -580,9 +667,9 @@ async def gm_panel(username: str, password: str):
     """
     return HTMLResponse(html)
 
-# ---------- API 实现 ----------
+# ---------- API 路由（均需 Cookie 验证） ----------
 @router.post("/update_player")
-async def update_player(req: Request):
+async def update_player(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     username = data.get("username")
     gold = data.get("gold")
@@ -595,7 +682,7 @@ async def update_player(req: Request):
     return {"success": True, "msg": "更新成功"}
 
 @router.post("/clear_occupation")
-async def clear_occupation(req: Request):
+async def clear_occupation(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     username = data.get("username")
     if not username:
@@ -604,7 +691,7 @@ async def clear_occupation(req: Request):
     return {"success": True, "msg": f"已清除 {username} 的占领状态"}
 
 @router.post("/add_hero")
-async def add_hero(req: Request):
+async def add_hero(req: Request, _: bool = Depends(verify_gm_cookie)):
     hero = await req.json()
     heroes_data = load_custom_heroes()
     if any(h["id"] == hero["id"] for h in heroes_data["heroes"]):
@@ -614,7 +701,7 @@ async def add_hero(req: Request):
     return {"success": True, "msg": "添加成功"}
 
 @router.post("/delete_hero")
-async def delete_hero(req: Request):
+async def delete_hero(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     hero_id = data["hero_id"]
     heroes_data = load_custom_heroes()
@@ -623,7 +710,7 @@ async def delete_hero(req: Request):
     return {"success": True, "msg": "删除成功"}
 
 @router.post("/toggle_hero")
-async def toggle_hero(req: Request):
+async def toggle_hero(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     hero_id = data.get("hero_id")
     heroes_data = load_custom_heroes()
@@ -635,7 +722,7 @@ async def toggle_hero(req: Request):
     return {"success": False, "msg": "武将不存在"}
 
 @router.post("/update_hero_weight")
-async def update_hero_weight(req: Request):
+async def update_hero_weight(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     hero_id = data.get("hero_id")
     weight = data.get("weight")
@@ -652,7 +739,7 @@ async def update_hero_weight(req: Request):
     return {"success": False, "msg": "武将不存在"}
 
 @router.post("/add_challenge")
-async def add_challenge(req: Request):
+async def add_challenge(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     name = data.get("name")
     nodes = data.get("nodes")
@@ -662,12 +749,15 @@ async def add_challenge(req: Request):
     for chal in challenges["challenges"]:
         if chal["name"] == name:
             return {"success": False, "msg": "副本名称已存在"}
+    for node in nodes:
+        if "enemy_level" not in node:
+            node["enemy_level"] = 1
     challenges["challenges"].append({"name": name, "nodes": nodes})
     save_challenges(challenges)
     return {"success": True, "msg": "添加成功"}
 
 @router.post("/delete_challenge")
-async def delete_challenge(req: Request):
+async def delete_challenge(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     index = data.get("index")
     challenges = load_challenges()
@@ -678,7 +768,7 @@ async def delete_challenge(req: Request):
     return {"success": False, "msg": "索引无效"}
 
 @router.post("/update_challenge")
-async def update_challenge(req: Request):
+async def update_challenge(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     index = data.get("index")
     name = data.get("name")
@@ -691,12 +781,15 @@ async def update_challenge(req: Request):
     for i, chal in enumerate(challenges["challenges"]):
         if i != index and chal["name"] == name:
             return {"success": False, "msg": "副本名称已存在"}
+    for node in nodes:
+        if "enemy_level" not in node:
+            node["enemy_level"] = 1
     challenges["challenges"][index] = {"name": name, "nodes": nodes}
     save_challenges(challenges)
     return {"success": True, "msg": "更新成功"}
 
 @router.post("/add_skill")
-async def add_skill(req: Request):
+async def add_skill(req: Request, _: bool = Depends(verify_gm_cookie)):
     skill = await req.json()
     if not skill.get("id") or not skill.get("name"):
         return {"success": False, "msg": "技能ID和名称不能为空"}
@@ -708,7 +801,7 @@ async def add_skill(req: Request):
     return {"success": True, "msg": "添加成功"}
 
 @router.post("/delete_skill")
-async def delete_skill(req: Request):
+async def delete_skill(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
     skill_id = data.get("skill_id")
     skills_data = load_skills()
@@ -716,43 +809,27 @@ async def delete_skill(req: Request):
     save_skills(skills_data)
     return {"success": True, "msg": "删除成功"}
 
-# ---------- 修改密码接口 ----------
 @router.post("/update_password")
-async def update_password(req: Request):
+async def update_password(req: Request, _: bool = Depends(verify_gm_cookie)):
     data = await req.json()
-    gm_username = data.get("gm_username")
-    gm_password = data.get("gm_password")
     target_username = data.get("target_username")
     new_password = data.get("new_password")
-    
-    if not all([gm_username, gm_password, target_username, new_password]):
+    if not target_username or not new_password:
         return {"success": False, "msg": "参数不足"}
-    
-    # 验证 GM 身份
-    if not is_gm(gm_username, gm_password):
-        return {"success": False, "msg": "无权限"}
-    
-    # 检查目标用户是否存在
     from core import get_user, hash_pwd
     user = get_user(target_username)
     if not user:
         return {"success": False, "msg": "用户不存在"}
-    
-    # 更新密码
     new_hash = hash_pwd(new_password)
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("UPDATE users SET password = ? WHERE username = ?", (new_hash, target_username))
     conn.commit()
     conn.close()
-    
     return {"success": True, "msg": "密码修改成功"}
 
-# ---------- 聊天记录查看接口 ----------
 @router.get("/gm_chat_log")
-async def get_gm_chat_log(username: str, password: str):
-    if not is_gm(username, password):
-        raise HTTPException(status_code=403, detail="无权限")
+async def get_gm_chat_log(_: bool = Depends(verify_gm_cookie)):
     log_path = "gm_chat.log"
     if not os.path.exists(log_path):
         return HTMLResponse("<h3>暂无聊天记录</h3><button onclick='window.close()'>关闭</button>")

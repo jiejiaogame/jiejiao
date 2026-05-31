@@ -1,484 +1,284 @@
-截教 · 万仙大阵 - 项目结构需求功能书
-1. 项目概述
-1.1 项目名称
-截教 · 万仙大阵（JieJiaoGame）
+截教·万仙大阵 - 项目结构需求功能书（详细版）
+一、项目概述
+项目	说明
+项目名称	截教·万仙大阵（JieJiaoGame）
+技术栈	Python 3.11 + FastAPI + WebSocket + SQLite + HTML/CSS/JS
+游戏模式	自动战斗（5v5），支持PVE副本（多仙岛）、PVP切磋（随机匹配或好友）、好友占领
+核心玩法	九宫格站位，武将按速度自动出手，释放技能（物理/法术/辅助/控制）。战斗过程可逐条动画播放，支持跳过动画直接结算
+特色系统	武将养成（等级/经验/自由属性点）、宝石镶嵌（单/双属性）、招贤馆招募、阵法加成、好友/黑名单、占领分舵、GM后台、等级减伤机制
+二、等级减伤机制（新增）
+为避免低等级玩家轻易击败高等级敌人，实现“等级压制”效果，战斗伤害计算中引入等级差免伤规则：
 
-1.2 项目定位
-一款基于神话背景的卡牌对战网页游戏，支持 PVE 副本、PVP 切磋、好友占领、武将养成、宝石系统、阵法布阵等核心玩法。战斗采用自动回合制，九宫格站位，支持技能特效与动画播放。
+2.1 生效范围
+仅对直接伤害生效（物理、法术、混合、技能伤害等）。
 
-1.3 技术栈
-后端：Python 3.11 + FastAPI + WebSocket + SQLite
+持续伤害（中毒、灼烧等）不受等级免伤影响，保证策略性。
 
-前端：HTML5 + CSS3 + 原生 JavaScript（无第三方框架）
+2.2 计算公式
+设攻击方等级 = lv_attacker，防御方等级 = lv_defender，等级差 = lv_defender - lv_attacker。
 
-通信：RESTful API + WebSocket（实时聊天、战斗结果推送）
+若等级差 ≤ 5：免伤 = 0%（无压制）
 
-资源：静态图片（武将立绘、宝石、特效）、音效（WAV/MP3）、背景音乐、技能动画 MP4
+若等级差 ≥ 6：
 
-2. 目录结构
-text
-jiejiaogame/
-│
-├── main.py                 # 启动入口（uvicorn）
-├── web.py                  # FastAPI 主路由 + WebSocket 逻辑
-├── core.py                 # 数据库操作、用户管理、宝石、占领、阵法、战力更新
-├── battle_engine.py        # 自动战斗核心引擎
-├── skill_engine.py         # 技能模块化加载与执行
-├── recruit.py              # 招贤馆商店 API
-├── admin.py                # GM 后台管理 API
-├── friend.py               # 好友系统数据库操作
-├── challenge.py            # 副本模块 API
-├── frontend.py             # 完整前端 HTML/CSS/JS 字符串（返回给根路由）
-│
-├── data/                   # 配置数据目录
-│   ├── custom_heroes.json  # 自定义武将配置（星级、属性、技能、权重）
-│   ├── challenges.json     # 副本配置（金鳌岛、三仙岛等）
-│   ├── skills.json         # 技能模板库
-│   ├── skill_animations.json # 技能名称与 MP4 文件映射
-│   └── disabled_config.json  # 禁用配置（预留）
-│
-├── static/                 # 静态资源目录
-│   ├── css/
-│   │   └── battle.css      # 战斗界面专用样式
-│   ├── js/
-│   │   └── battle.js       # 战斗动画与 UI 交互核心逻辑
-│   ├── images/
-│   │   ├── bg/             # 各场景背景图（1920×1080）
-│   │   ├── heroes/         # 武将立绘、攻击图、受击图（PNG）
-│   │   ├── gems/           # 宝石图片
-│   │   ├── effects/        # 状态特效图（眩晕、中毒等）
-│   │   └── avatars/        # 玩家头像
-│   ├── sounds/
-│   │   ├── heroes/         # 武将独有音效（attack.wav / hit.wav）
-│   │   └── *.wav           # 通用音效（攻击、暴击、胜利等）
-│   └── music/              # 背景音乐（bg01.mp3, battle.mp3, fightwin.mp3, fightlose.mp3）
-│
-└── ad/                     # 广告图片目录（预留）
-3. 核心功能模块
+免伤比例 = min(0.9, (等级差 - 5) * 0.2 + 0.1)
+
+举例：
+
+等级差	免伤比例
+6	30%
+7	50%
+8	70%
+9	90%
+≥10	90%
+最终伤害 = 原始伤害 × (1 - 免伤比例)，最低为1点伤害。
+
+2.3 设计目的
+鼓励玩家提升武将等级，体现成长价值。
+
+拉开等级差距时，低等级玩家无法轻松碾压高等级副本。
+
+中毒、固伤类技能成为挑战高等级敌人的策略手段。
+
+2.4 副本敌人等级配置
+每个副本节点可单独配置 enemy_level（敌人等级）。
+
+敌人属性（生命、攻击等）根据其等级、5星基础属性、自动分配的自由属性点动态计算，与玩家武将成长逻辑完全一致。
+
+副本推荐等级与敌人等级的关系：一般敌人等级略高于推荐等级（0~5级），节点越高敌人等级越高，形成渐进难度。
+
+三、核心功能模块（原有模块摘要）
 3.1 用户系统
-注册 / 登录（用户名、密码、邮箱）
+注册/登录（用户名≤5字符，邮箱验证），新注册赠送500金币+1星随机武将。
 
-头像更换（从 /static/images/avatars/ 读取）
+每日登录奖励500金币，金币/元宝系统（1元宝=1钻石，暂未开放充值）。
 
-金币与元宝（钻石）系统，元宝用于宝石商店购买
+武将管理（查看拥有的武将、星级、等级、经验、自由属性点、战力）。
 
-每日登录奖励 500 金币
-
-新手注册赠送 500 金币 + 1 个 1 星随机武将
+头像切换（从 /static/images/avatars/ 读取），排行榜（今日金币榜、战力榜）。
 
 3.2 武将系统
-武将配置：ID、名称、5星满属性（生命、力量、智力、敏捷）、技能引用、权重、启用状态
+基础属性：生命、力量、智力、敏捷（5星满属性在 custom_heroes.json 定义）。
 
-星级：1-5星，招募时获得 1-4 星（5星为满属性基准）
+星级：1-5星，影响属性成长（招募时1-4星，5星仅作基础值）。
 
-等级与经验：每级所需经验公式 100 + 20*(Lv-1) + 1.5*(Lv**1.5)，最高 100 级
+等级与经验：
 
-自由属性点：每 10 级获得 5 点，可分配至生命、力量、智力、敏捷
+初始1级，最高100级。
 
-技能：每个武将引用技能模板（skills.json），可覆盖目标数量、持续时间、伤害系数等
+每级所需经验 = 100 + 20*(等级-1) + 3*(等级^1.5)。
 
-招募：通过招贤馆消耗金币招募，招募后从商店移除，4星及以上全服广播
+每升10级获得5点自由属性点，可分配：+10生命、+1力量、+1智力、+1敏捷。
 
-遣散：返还一半经验（转化为经验药水），镶嵌宝石自动回背包
+技能：每个武将引用一个技能模板（skills.json），可覆盖参数。
 
-3.3 战斗系统（九宫格动画）
-站位：九宫格 3x3，最多上阵 5 人（由阵法决定可用格子）
+招募：招贤馆消耗金币招募（权重随机，4星及以上全服广播）。
 
-出手顺序：按最终敏捷（含等级成长+自由点）降序
+遣散：返还一半经验（经验药水），宝石自动回背包。
 
-行动：每回合每个存活武将释放技能（若无技能则普通攻击）
+3.3 战斗系统（九宫格动画 + 等级减伤）
+九宫格站位，每方最多5人（由玩家在演武场布阵）。
 
-回合上限：20 回合，若未决出胜负则按剩余总血量高者胜
+按最终速度（含等级成长+自由点）降序决定出手顺序。
 
-视觉表现：
+每回合每个存活武将释放一次技能（若无技能则普通攻击）。
 
-武将图片置于格子底部，允许溢出（最大 250%），敌方水平翻转
+最大回合20，未决出胜负按剩余总血量高者胜。
 
-名字和血量条叠加在图片底部
+伤害计算中应用等级减伤机制（见第二章）。
 
-行重叠效果（下层武将压上层约 40px）
+战斗表现：
 
-攻击动画：克隆体从攻击者位置飞向目标侧前方（偏移 60px），原始头像透明
+单体攻击：攻击者头像移动到目标位置，停留0.9秒（切换攻击/受击图片），再移动回来。
 
-受击特效：替换为受击图，震动，飘血数字
+群体攻击：攻击者移动到屏幕中央，预留技能视频动画位（1.8秒）。
 
-技能特效：法术全屏闪光、控制模糊、治疗绿光、毒雾烟雾
+支持“跳过战斗”按钮，逃跑无损失无奖励。
 
-技能名称显示：屏幕中央上方，带缩放淡入淡出
+死亡英雄显示灰色滤镜和“倒地”文字。
 
-支持跳过战斗动画直接结算，支持逃跑
+阵营标题后显示平均等级（如“🔥 截教阵营 平均Lv.35”），单个武将卡片不显示等级，避免手机端动画异常。
 
-状态图标：使用 Emoji + 文字悬浮显示（眩晕😵、中毒☠️、护盾🛡️、攻击提升⚡），持续 5 秒
+3.4 副本系统（多仙岛）
+支持多个副本（金鳌岛、三仙岛、玉虚宫、八景宫等），下拉菜单切换。
 
-3.4 副本系统（仙岛闯关）
-多个副本（金鳌岛、三仙岛），下拉菜单切换
+每个副本固定7个节点，节点呈线性连接。
 
-每个副本固定 7 个节点，线性连接
+节点配置：主将ID列表、敌人等级、经验、金币、宝石掉落概率。
 
-节点配置：主将 ID 列表、战力、经验、金币、宝石掉落概率
+每日每个节点只能挑战1次（凌晨重置）。
 
-每日每个节点仅可挑战 1 次（凌晨重置）
+胜利奖励：经验（给出战武将）、金币，概率掉落1-5星单属性宝石。
 
-胜利获得经验（给出战武将）、金币，概率掉落 1 星宝石
+失败无惩罚，不消耗当日次数。
 
-失败无惩罚且不消耗挑战次数
-
-副本背景图动态切换
+敌人属性根据等级动态计算，与玩家武将成长一致。
 
 3.5 招贤馆（万仙殿）
-商店刷新间隔 20 分钟（免费刷新，也可消耗 100 金币立即刷新）
+商店刷新间隔20分钟（可免费刷新，或100金币立即刷新）。
 
-每次随机生成 3 个武将（根据权重随机，星级 1-4）
+每次随机生成3个武将，根据权重概率出现（普通100、稀有50、传说20）。
 
-招募消耗金币（1星 100, 2星 150, 3星 200, 4星 500）
+武将星级1-4星，招募消耗金币（1星100，2星150，3星200，4星500）。
 
-武将招募后从当前商店移除，玩家获得该武将（1 级，星级即为招募星级）
-
-禁用的武将（enabled: false）不会出现
+禁用的武将（enabled: false）不会出现在招贤馆中。
 
 3.6 演武场（布阵）
-玩家选择 5 名武将上阵，放置在阵法预设位置
+玩家选择5名武将上阵，放置在九宫格预设位置（不同阵法提供不同位置）。
 
-阵法类型：普通阵、攻击阵（力量+10%）、智力阵（智力+10%）、防御阵（生命+10%）、敏捷阵（速度+10%）
+阵法类型：普通阵、攻击阵（力量+10%）、智力阵（智力+10%）、防御阵（生命+10%）、敏捷阵（速度+10%）。
 
-不可用的格子显示“🔒”且不可点击
+阵容保存到数据库（formations 字段，同时保存 formation_type）。
 
-阵容保存到数据库（formations 字段，支持多阵法独立存储）
+3.7 宝石系统
+宝石类型：力量、智力、敏捷、生命（单属性），双属性宝石融合产生。
 
-3.7 宝石系统（八卦炉）
-宝石类型：力量、智力、敏捷、生命（单属性），双属性宝石由融合产生
+获得方式：副本掉落、融合。
 
-获得方式：副本掉落（仅 1 星）、融合、GM 后台
+镶嵌：每个武将最多5个宝石槽位，同属性宝石不可重复镶嵌。
 
-镶嵌：每个武将最多 5 个宝石槽，同属性宝石不可重复镶嵌
+卸下消耗500金币，宝石回背包。
 
-卸下：消耗 500 金币，宝石回背包（支持堆叠）
+融合（八卦炉）：同属性同星级→高1星单属性（成功率随星级递减）；不同属性→低1星双属性（50%概率）。
 
-融合（八卦炉）：
-
-同星级同属性 → 升 1 星（成功率：1星 90%, 2星 70%, 3星 60%, 4星 40%）
-
-同星级不同属性 → 降 1 星双属性（成功率 50%）
-
-分解：双属性宝石 → 两个 2 星单属性宝石（必成功）
-
-宝石商店：使用钻石购买 1 星宝石，支持批量购买
+分解：双属性宝石→两个2星单属性宝石（必成功）。
 
 3.8 好友与社交
-添加/删除好友，在线状态显示
+添加/删除好友，在线状态显示，好友申请实时通知。
 
-好友申请实时 WebSocket 通知（日志面板带“同意”/“拒绝”按钮）
+黑名单：拉黑后不再接收消息。
 
-黑名单：拉黑后不再接收消息，可移除
+私聊（支持离线消息存储）。
 
-私聊：支持离线消息（@好友触发）
+占领机制：切磋战胜好友后，可选择占领对方主城（使其成为“碧游宫分舵”）。
 
-占领机制：
+被占领玩家正常游戏，但碧游宫显示占领者头像。
 
-切磋战胜好友后可占领对方主城（成为“碧游宫分舵”）
+占领持续10分钟（倒计时结束自动释放）。
 
-被占领玩家可在碧游宫点击“解救自己”，战斗胜利解除占领
+占领期间占领者可访问被占领者的万仙殿并招募一次（需满10分钟才可招募）。
 
-其他好友可点击“解救”击败占领者
+其他好友可在好友列表中点击“解救”，击败占领者则解除占领。
 
-占领持续 10 分钟，占领期间可访问被占领者的万仙殿并招募一次
-
-切磋：
-
-随机匹配战力相近的在线玩家，若无则生成人机
-
-每日前 10 次切磋可获得经验（自我切磋 25 经验/次，玩家切磋 50 经验/次）
-
-好友切磋通过好友列表“切磋”按钮进行
+切磋：随机匹配战力相近的在线玩家（战力差<500），无人则生成人机。每日前10次切磋可获得经验。
 
 3.9 房间系统（PVP）
-创建房间（1v1 模式，可选密码）
+创建房间（1v1模式，可选密码），加入房间（房间号+密码验证），准备/开始，离开房间。
 
-加入房间（房间号，密码验证）
+3.10 GM后台（仅GM01账户）
+玩家管理：修改金币、元宝，清除占领，修改密码。
 
-准备/开始匹配（房主开始后，双方自动战斗）
+武将管理：查看/添加/删除/启用/禁用武将，调整招募权重。
 
-离开房间
+技能模板管理：查看/添加/删除技能模板（JSON格式）。
 
-3.10 GM 后台
-仅 GM01 账户可访问（/admin/gm?username=GM01&password=gm123456）
-
-玩家管理：修改金币、元宝，清除占领状态，修改密码
-
-武将管理：查看/添加/删除/启用/禁用武将（禁用后招贤馆不再出现）
-
-技能模板管理：查看/添加/删除技能模板（JSON 格式）
-
-副本管理：添加/删除/编辑副本（固定 7 节点），配置主将 ID、战力、经验、金币、掉落概率
+副本管理：添加/删除/编辑副本（固定7节点），配置主将ID、敌人等级、经验、金币、掉落概率。
 
 3.11 碧游宫（主界面扩展）
-显示玩家等级、经验、占领者头像+名字
+显示玩家等级、经验、占领者。
 
-被占领时显示“解救自己”按钮
+显示“我的分舵”：列出自己占领的好友，每个分舵显示剩余占领倒计时、头像，点击头像可进入对方万仙殿。
 
-显示“我的分舵”：列出自己占领的好友，每个分舵显示剩余占领倒计时、头像，点击头像进入对方碧游宫，并可选择“参观万仙殿”（只读）
+解救按钮（若自己未被占领）或解救自己（若被占领）。
 
-自己的碧游宫不可占领他人，仅显示信息
-
-3.12 每日任务（修行）
-任务类型：每日登录、自我切磋、好友切磋、副本挑战、八卦炉商店购物
-
-奖励：金币或钻石，每日重置进度，可领取已完成奖励
-
-3.13 祈愿系统（烧香）
-消耗 1000 金币进行祈愿，每日前 10 次为正常祈愿（求财、求缘、求机缘），之后为特殊祈愿
-
-求财：50% 概率获得 2000 或 5000 金币
-
-求缘：50% 概率获得 2-4 星武将（已拥有则转化为经验药水）
-
-求机缘：30% 概率获得经验药水
-
-特殊祈愿：80% 概率获得 1 小时“盘古祝福”（全属性 +10%），否则无奖励
-
-祝福效果在左上角显示倒计时
-
-3.14 天骄榜（战力排行榜）
-计算玩家最高 5 将战力之和，存入数据库 power 字段
-
-战力值在武将变动（招募、升级、属性点、宝石、遣散）时自动更新
-
-排行榜显示前 100 名玩家（用户名、战力），底部显示本人战力和排名
-
-前端提供“🏆 天骄榜”按钮，弹窗展示
-
-3.15 音量持久化
-用户音量设置保存到数据库 volume 字段
-
-页面加载时读取并应用到音乐元素
-
-音量滑块变化时自动保存
-
-4. 数据库设计（核心表）
-4.1 users
+四、数据库表结构（关键字段）
+users 表（主要字段）
 字段	类型	说明
 username	TEXT PRIMARY KEY	用户名
 password	TEXT	哈希密码
-email	TEXT	邮箱
-reg_time	TEXT	注册时间
 gold	INTEGER	金币
 ingots	INTEGER	元宝
-heroes	TEXT (JSON)	拥有的武将列表，如 ["多宝道人"]
-star_heroes	TEXT (JSON)	武将星级，如 {"多宝道人":5}
-hero_exp	TEXT (JSON)	武将经验值
-hero_level	TEXT (JSON)	武将等级
-hero_free_points	TEXT (JSON)	武将自由属性点
-hero_bonus_attrs	TEXT (JSON)	已分配自由点
-hero_gems	TEXT (JSON)	武将镶嵌的宝石 ID 列表
-items	TEXT (JSON)	道具（宝石、经验药水等）
-avatar	TEXT	头像文件名
-challenge_level	INTEGER	副本挑战进度
-challenge_date	TEXT	上次挑战日期
-recruit_shop	TEXT (JSON)	招贤馆商店内容
-recruit_refresh_time	TEXT	下次免费刷新时间
-last_login_date	TEXT	上次登录日期
-daily_gold	INTEGER	今日获得金币
-daily_pvp_count	INTEGER	今日切磋次数
-formation	TEXT (JSON)	当前上阵阵容
-formation_type	TEXT	当前阵法类型
-occupied_by	TEXT	占领者用户名
+heroes	TEXT(JSON)	拥有的武将列表
+star_heroes	TEXT(JSON)	武将星级
+hero_level	TEXT(JSON)	武将等级
+hero_exp	TEXT(JSON)	武将经验
+hero_free_points	TEXT(JSON)	自由属性点
+hero_bonus_attrs	TEXT(JSON)	已分配自由点
+hero_gems	TEXT(JSON)	镶嵌的宝石ID列表
+items	TEXT(JSON)	道具（宝石、经验药水）
+formation	TEXT(JSON)	上阵阵容
+formation_type	TEXT	阵法类型
+occupied_by	TEXT	占领者
 occupied_time	TEXT	占领开始时间
-formations	TEXT (JSON)	各阵法阵容映射
-daily_tasks	TEXT (JSON)	每日任务进度
-pray_count	INTEGER	今日祈愿次数
-pray_date	TEXT	最后祈愿日期
-temp_buff_expire	TEXT	临时祝福过期时间
-power	INTEGER	玩家战力（天骄榜）
-volume	INTEGER	音量设置 (0-100)
-4.2 friendships
-字段	说明
-user1, user2	好友对
-status	pending / accepted
-created_at, updated_at	时间戳
-4.3 blacklist
+...	...	...
+副本进度表 user_challenge_progress
 字段	说明
 username	用户
-blocked_user	被拉黑的用户
-created_at	创建时间
-4.4 user_challenge_progress
-字段	说明
-username	用户
-challenge_id	副本 ID
-node_id	节点号 (1-7)
+challenge_id	副本ID
+node_id	节点号
 date	挑战日期
-4.5 daily_rank（今日金币榜）
-字段	说明
-username	用户
-avatar	头像
-daily_gold	今日获得金币
-update_date	日期
-5. API 路由（主要）
-路由	方法	说明
-/	GET	游戏主页面
-/login	POST	登录
-/register	POST	注册
-/user_resources	GET	获取金币/元宝
-/my_heroes	GET	我的武将列表
-/hero_detail	GET	武将详情（含战力、技能）
-/allocate_point	POST	分配自由属性点
-/dismiss_hero	POST	遣散武将
-/save_formation	POST	保存阵容
-/get_formation	GET	获取阵容
-/challenge/challenge	POST	挑战副本节点
-/match_pvp	POST	匹配切磋
-/match_pvp_with_friend	POST	与好友切磋
-/solo_practice	POST	自我切磋
-/occupy_friend	POST	占领好友
-/release_friend	POST	解救好友
-/self_release	POST	解救自己
-/rob_occupied	POST	抢夺占领
-/fuse_gems	POST	宝石融合
-/decompose_gem	POST	宝石分解
-/equip_gem	POST	镶嵌宝石
-/unequip_gem	POST	卸下宝石
-/user_items	GET	获取背包宝石
-/get_occupier	GET	获取占领者
-/api/occupied_list	GET	获取自己占领的好友列表
-/api/occupied_info	GET	获取占领信息
-/recruit/shop	GET	招贤馆商店
-/recruit/hire	POST	招募武将
-/recruit/refresh	POST	刷新商店
-/recruit/other_shop	GET	查看被占领玩家的商店
-/recruit/hire_from_occupied	POST	占领者招募
-/api/friends	GET	好友列表
-/api/friend/add	POST	添加好友
-/api/friend/accept	POST	接受申请
-/api/friend/reject	POST	拒绝申请
-/api/friend/delete	POST	删除好友
-/api/blacklist	GET	黑名单列表
-/api/blacklist/add	POST	加入黑名单
-/api/blacklist/remove	POST	移出黑名单
-/friend_palace_info	GET	好友碧游宫信息
-/avatar_list	GET	头像列表
-/update_avatar	POST	更换头像
-/rank/daily	GET	今日金币榜
-/rank/power	GET	天骄榜（战力排行）
-/daily_tasks	GET	每日任务
-/claim_task	POST	领取任务奖励
-/pray/status	GET	祈愿状态（含剩余秒数）
-/pray/burn_incense	POST	烧香祈愿
-/shop/buy_gem	POST	宝石商店购买
-/skill_animations	GET	技能视频映射
-/set_volume	POST	保存音量
-/admin/gm	GET	GM 后台
-6. WebSocket 协议
-客户端 → 服务端
-act	参数	说明
-login	uid	用户登录
-create_room	mode, password	创建房间
-join_room	roomId, password	加入房间
-ready	ready	准备/取消准备
-start_battle	left_team, right_team, skip	开始自动战斗
-escape	无	逃跑
-chat	msg	聊天
-friend_list_update	target	通知对方刷新好友列表
-leave_room	无	离开房间
-服务端 → 客户端
-type	字段	说明
-login_ok	无	登录成功
-battle_result	log, winner, left_power, right_power, left_team, right_team	战斗结果
-escape_result	winner	逃跑结果
-chat_msg	text	聊天消息
-friend_request	from, msg	好友申请通知
-friend_list_update	无	好友列表更新
-room_state	players, mode, roomId, ...	房间状态
-7. 前端界面说明
-顶部栏：用户头像、用户名、祝福倒计时、金币、钻石、音量滑块、功能按钮（天骄榜、万仙殿、我的武将、好友、注销）
+五、API路由完整列表（略，详见代码）
+核心路由：
 
-标签页：仙岛（副本）、演武场（布阵）、八卦炉（宝石）、碧游宫（占领/分舵）
+/challenge/list、/challenge/nodes、/challenge/challenge
 
-日志面板：可拖动，实时显示操作反馈和聊天输入框，战斗动画逐条显示，好友申请带按钮
+/match_pvp、/match_pvp_with_friend、/solo_practice
 
-模态框：登录/注册、招贤馆、我的武将、武将详情（技能悬停提示）、头像选择、好友操作菜单、碧游宫访问、万仙殿参观、天骄榜
+/occupy_friend、/release_friend、/self_release、/rob_occupied
 
-战斗界面：九宫格战场，显示英雄名称、血条，攻击动画（单体/群体），技能名称动态显示，右上角显示敌方玩家头像，支持跳过战斗和逃跑
+/recruit/shop、/recruit/hire、/recruit/refresh
 
-好友面板：浅色背景，顶部自我切磋，下方好友列表（最多 50 个，滚动），每个好友可弹出互动菜单（私聊、切磋、占领、解救、访问、删除、拉黑）
+/admin/gm 等
 
-8. 部署与运行
-8.1 环境要求
-Python 3.11+
+六、副本配置示例（challenges.json）
+json
+{
+  "challenges": [
+    {
+      "id": "jinao",
+      "name": "金鳌岛",
+      "min_level": 5,
+      "nodes": [
+        {"node_id": 1, "main_hero_ids": ["duobao"], "enemy_level": 5, "exp": 50, "gold": 100, "drop_rate": 0.3},
+        ...
+      ]
+    },
+    {
+      "id": "yuxu",
+      "name": "玉虚宫",
+      "min_level": 35,
+      "nodes": [
+        {"node_id": 1, "main_hero_ids": ["yunxiao"], "enemy_level": 35, "exp": 200, "gold": 400, "drop_rate": 0.4},
+        ...
+      ]
+    }
+  ]
+}
+enemy_level 直接决定敌人强度，敌人属性根据该等级动态计算。
+
+副本背景图根据 id 切换（需准备对应 challenge_{id}.jpg）。
+
+七、战斗伤害流程（含等级减伤）
+计算基础伤害（根据技能公式、攻击方属性、增益/减益）。
+
+判断暴击（如有）。
+
+计算等级差免伤（仅直接伤害）：
+
+取防御方等级 - 攻击方等级。
+
+若差 ≤5，免伤0；否则免伤 = min(0.9, (差-5)*0.2+0.1)。
+
+伤害 = 伤害 × (1 - 免伤)，最小1点。
+
+扣除护盾，再扣除生命值。
+
+持续伤害（中毒等）在回合结束时单独扣除，不经过免伤计算。
+
+八、部署与运行
+环境要求：Python 3.11+
 
 安装依赖：pip install fastapi uvicorn
 
-8.2 启动命令
-bash
-python main.py
-8.3 访问地址
-游戏页面：http://127.0.0.1:8000
+启动命令：python main.py
 
-GM 后台：http://127.0.0.1:8000/admin/gm?username=GM01&password=gm123456
+访问地址：http://127.0.0.1:8000
 
-8.4 管理员账号
-用户名：GM01
+GM账号：GM01 / gm123456
 
-密码：gm123456
+九、版本历史
+v5.2 (2025-05-31)：增加等级减伤机制详细说明，更新副本敌人等级配置方式，优化战斗体验。
 
-9. 资源文件规范
-9.1 武将图片
-路径：static/images/heroes/
+v5.1 (2025-05-26)：增加平均等级显示，修复战斗动画手机端兼容性。
 
-命名：{id}.png（立绘）、{id}_attack.png（攻击动作）、{id}_hit.png（受击动作）
-
-尺寸：不限，CSS 使用 object-fit: contain，底部对齐格子（120×150 基准）
-
-9.2 宝石图片
-路径：static/images/gems/
-
-命名：strength.png, intelligence.png, speed.png, hp.png, double.png
-
-尺寸：64×64 或 128×128，PNG 透明背景
-
-9.3 背景图片
-路径：static/images/bg/
-
-命名：battle_bg.jpg, challenge_jinao.jpg, challenge_sanxian.jpg, biyougong.jpg, bagualu.jpg, wanxiandian.jpg, lianxianzhen.jpg
-
-尺寸：1920×1080
-
-9.4 特效图片
-路径：static/images/effects/
-
-命名：magic_flash.png, physical_impact.png, heal_glow.png, poison_cloud.png, stun_mark.png
-
-尺寸：256×256，透明背景（实际未使用，状态图标改用 Emoji）
-
-9.5 音效文件
-武将独有音效：static/sounds/heroes/{id}_attack.wav, {id}_hit.wav
-
-通用音效：attack_physical.wav, attack_magic.wav, heal.wav, crit.wav, victory.wav, defeat.wav
-
-若无对应音效，游戏静默（控制台警告）
-
-9.6 背景音乐
-路径：static/music/
-
-文件：bg01.mp3（主界面）、battle.mp3（战斗）、fightwin.mp3（胜利）、fightlose.mp3（失败）
-
-9.7 技能动画视频
-路径：static/videos/
-
-命名：见 data/skill_animations.json 映射，如 wanbaochao.mp4 等
-
-格式：MP4，尺寸建议 400×225（播放器占位框大小）
-
-10. 扩展与维护
-新增副本：在 data/challenges.json 中添加配置
-
-新增武将：在 data/custom_heroes.json 中添加条目，设置 enabled: true
-
-新增技能模板：在 data/skills.json 中添加，并在武将配置中引用 base_id
-
-调整战斗数值：修改 battle_engine.py 中的计算公式
-
-调整动画参数：修改 battle.js 中的偏移量、持续时间等
-
-11. 版本记录
-版本	日期	内容
-6.0	2025-05-14	初始完整版
-6.1	2025-05-24	增加天骄榜、音量持久化、祝福倒计时，修复攻击动画、状态图标、血量刷新等
+v5.0 (2025-05-20)：核心功能稳定运行，战斗动画完善。

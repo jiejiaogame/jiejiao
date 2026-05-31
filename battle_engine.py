@@ -1,4 +1,4 @@
-# battle_engine.py - 修复版（保证血量至少为1，补充position字段）
+# battle_engine.py - 修复版（保证血量至少为1，补充position字段，添加等级传递）
 import random
 import copy
 import re
@@ -11,28 +11,16 @@ from skill_engine import (
 
 # ========== 九宫格镜像对称函数 ==========
 def mirror_position(pos: int) -> int:
-    """
-    九宫格水平镜像对称（左右翻转）
-    0(左上) ↔ 2(右上)
-    1(上中) ↔ 1(上中)
-    3(左中) ↔ 5(右中)
-    4(正中) ↔ 4(正中)
-    6(左下) ↔ 8(右下)
-    7(下中) ↔ 7(下中)
-    """
     row = pos // 3
     col = pos % 3
     new_col = 2 - col
     return row * 3 + new_col
 
-
 def mirror_team_positions(team: list) -> list:
-    """将队伍中所有武将的位置进行镜像转换"""
     for hero in team:
         if 'position' in hero:
             hero['position'] = mirror_position(hero['position'])
     return team
-
 
 # ========== 等级与经验计算 ==========
 EXP_BASE = 100
@@ -91,7 +79,6 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
     left = copy.deepcopy(team_left)
     right = copy.deepcopy(team_right)
     
-    # 为每个英雄补充 position（若缺失则按索引分配）
     for idx, h in enumerate(left):
         if 'position' not in h:
             h['position'] = idx % 9
@@ -99,7 +86,6 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
         if 'position' not in h:
             h['position'] = idx % 9
 
-    # PVP 战斗：敌方队伍位置镜像对称
     right = mirror_team_positions(right)
 
     for h in left:
@@ -246,7 +232,6 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
             if left_alive == 0 or right_alive == 0:
                 break
 
-        # 回合结束：更新状态持续时间并处理中毒伤害
         poison_logs = update_status_duration(battle_context, get_alive_units())
         log.extend(poison_logs)
         
@@ -267,7 +252,6 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
     def clean_team(team):
         cleaned = []
         for h in team:
-            # 确保 position 存在（用于前端九宫格）
             pos = h.get('position', 0)
             cleaned.append({
                 'name': h['name'],
@@ -276,6 +260,7 @@ def auto_battle(team_left: List[Dict], team_right: List[Dict], max_rounds: int =
                 'position': pos,
                 'team': h['team'],
                 'id': h.get('id', h['name']),
+                'level': h.get('level', 1),
                 'shield': int(h.get('shield', 0))
             })
         return cleaned

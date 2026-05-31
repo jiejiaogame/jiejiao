@@ -1,11 +1,11 @@
-# challenge.py - 副本模块（支持任务进度更新）
+# challenge.py - 副本模块（支持任务进度更新，敌将等级成长）
 import os
 import json
 import random
 import sqlite3
 from datetime import datetime
 from fastapi import APIRouter, Request
-from core import get_user, update_user_items, add_hero_exp, add_gem_to_user, DB_PATH, create_gem
+from core import get_user, update_user_items, add_hero_exp, add_gem_to_user, DB_PATH, create_gem, generate_enemy_hero
 from battle_engine import auto_battle
 
 router = APIRouter(prefix="/challenge", tags=["challenge"])
@@ -38,13 +38,13 @@ def load_challenges():
                 "name": "金鳌岛",
                 "min_level": 5,
                 "nodes": [
-                    {"node_id": 1, "main_hero_ids": ["duobao"], "power": 500, "exp": 100, "gold": 200, "drop_rate": 0.3},
-                    {"node_id": 2, "main_hero_ids": ["jinling"], "power": 800, "exp": 120, "gold": 250, "drop_rate": 0.3},
-                    {"node_id": 3, "main_hero_ids": ["wudang"], "power": 1100, "exp": 140, "gold": 300, "drop_rate": 0.3},
-                    {"node_id": 4, "main_hero_ids": ["guiling"], "power": 1400, "exp": 160, "gold": 350, "drop_rate": 0.3},
-                    {"node_id": 5, "main_hero_ids": ["yunxiao"], "power": 1700, "exp": 180, "gold": 400, "drop_rate": 0.3},
-                    {"node_id": 6, "main_hero_ids": ["zhaogongming"], "power": 2000, "exp": 200, "gold": 450, "drop_rate": 0.3},
-                    {"node_id": 7, "main_hero_ids": ["duobao", "jinling"], "power": 2500, "exp": 300, "gold": 600, "drop_rate": 0.4}
+                    {"node_id": 1, "main_hero_ids": ["duobao"], "enemy_level": 10, "exp": 100, "gold": 200, "drop_rate": 0.3},
+                    {"node_id": 2, "main_hero_ids": ["jinling"], "enemy_level": 15, "exp": 120, "gold": 250, "drop_rate": 0.3},
+                    {"node_id": 3, "main_hero_ids": ["wudang"], "enemy_level": 20, "exp": 140, "gold": 300, "drop_rate": 0.3},
+                    {"node_id": 4, "main_hero_ids": ["guiling"], "enemy_level": 25, "exp": 160, "gold": 350, "drop_rate": 0.3},
+                    {"node_id": 5, "main_hero_ids": ["yunxiao"], "enemy_level": 30, "exp": 180, "gold": 400, "drop_rate": 0.3},
+                    {"node_id": 6, "main_hero_ids": ["zhaogongming"], "enemy_level": 35, "exp": 200, "gold": 450, "drop_rate": 0.3},
+                    {"node_id": 7, "main_hero_ids": ["duobao", "jinling"], "enemy_level": 40, "exp": 300, "gold": 600, "drop_rate": 0.4}
                 ]
             },
             {
@@ -52,13 +52,13 @@ def load_challenges():
                 "name": "三仙岛",
                 "min_level": 20,
                 "nodes": [
-                    {"node_id": 1, "main_hero_ids": ["yunxiao"], "power": 1200, "exp": 150, "gold": 300, "drop_rate": 0.35},
-                    {"node_id": 2, "main_hero_ids": ["qiongxiao"], "power": 1600, "exp": 180, "gold": 350, "drop_rate": 0.35},
-                    {"node_id": 3, "main_hero_ids": ["bixiao"], "power": 2000, "exp": 210, "gold": 400, "drop_rate": 0.35},
-                    {"node_id": 4, "main_hero_ids": ["yunxiao", "qiongxiao"], "power": 2400, "exp": 240, "gold": 480, "drop_rate": 0.35},
-                    {"node_id": 5, "main_hero_ids": ["qiongxiao", "bixiao"], "power": 2800, "exp": 270, "gold": 560, "drop_rate": 0.35},
-                    {"node_id": 6, "main_hero_ids": ["yunxiao", "bixiao"], "power": 3200, "exp": 300, "gold": 640, "drop_rate": 0.35},
-                    {"node_id": 7, "main_hero_ids": ["yunxiao", "qiongxiao", "bixiao"], "power": 4000, "exp": 400, "gold": 800, "drop_rate": 0.45}
+                    {"node_id": 1, "main_hero_ids": ["yunxiao"], "enemy_level": 35, "exp": 150, "gold": 300, "drop_rate": 0.35},
+                    {"node_id": 2, "main_hero_ids": ["qiongxiao"], "enemy_level": 38, "exp": 180, "gold": 350, "drop_rate": 0.35},
+                    {"node_id": 3, "main_hero_ids": ["bixiao"], "enemy_level": 41, "exp": 210, "gold": 400, "drop_rate": 0.35},
+                    {"node_id": 4, "main_hero_ids": ["yunxiao", "qiongxiao"], "enemy_level": 44, "exp": 240, "gold": 480, "drop_rate": 0.35},
+                    {"node_id": 5, "main_hero_ids": ["qiongxiao", "bixiao"], "enemy_level": 47, "exp": 270, "gold": 560, "drop_rate": 0.35},
+                    {"node_id": 6, "main_hero_ids": ["yunxiao", "bixiao"], "enemy_level": 50, "exp": 300, "gold": 640, "drop_rate": 0.35},
+                    {"node_id": 7, "main_hero_ids": ["yunxiao", "qiongxiao", "bixiao"], "enemy_level": 55, "exp": 400, "gold": 800, "drop_rate": 0.45}
                 ]
             }
         ]
@@ -71,65 +71,28 @@ def load_challenges():
     with open(CHALLENGES_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def generate_enemy_team(main_hero_ids: list, target_power: int):
+def generate_enemy_team(main_hero_ids: list, enemy_level: int) -> list:
+    """
+    根据主将ID列表和统一等级生成敌方队伍（5人）
+    缺位用随机武将补齐
+    """
+    team = []
+    # 生成主将
+    for idx, hid in enumerate(main_hero_ids):
+        hero = generate_enemy_hero(hid, enemy_level, star=5)
+        hero["position"] = idx
+        team.append(hero)
+    
+    # 补齐到5人（随机从所有启用的武将中选取）
     from web import load_heroes_db
     heroes_db = load_heroes_db()
-    heroes = heroes_db.get("heroes", [])
-    team = []
-    for idx, hid in enumerate(main_hero_ids):
-        hero = next((h for h in heroes if h["id"] == hid), None)
-        if hero:
-            team.append({
-                "name": hero["name"],
-                "id": hero["id"],
-                "level": 1,
-                "star": 5,
-                "base_attrs": {
-                    "hp": hero["star5_hp"],
-                    "strength": hero["star5_strength"],
-                    "intelligence": hero["star5_intelligence"],
-                    "speed": hero["star5_speed"]
-                },
-                "bonus_attrs": {},
-                "skill": hero.get("skill"),
-                "position": idx,
-                "hp": hero["star5_hp"],
-                "maxHp": hero["star5_hp"],
-                "final_attrs": {
-                    "hp": hero["star5_hp"],
-                    "strength": hero["star5_strength"],
-                    "intelligence": hero["star5_intelligence"],
-                    "speed": hero["star5_speed"]
-                }
-            })
-    all_names = [h["name"] for h in heroes]
+    all_heroes = [h for h in heroes_db["heroes"] if h.get("enabled", True)]
     while len(team) < 5:
-        name = random.choice(all_names)
-        hero = next((h for h in heroes if h["name"] == name), None)
-        if hero:
-            team.append({
-                "name": hero["name"],
-                "id": hero["id"],
-                "level": 1,
-                "star": 5,
-                "base_attrs": {
-                    "hp": hero["star5_hp"],
-                    "strength": hero["star5_strength"],
-                    "intelligence": hero["star5_intelligence"],
-                    "speed": hero["star5_speed"]
-                },
-                "bonus_attrs": {},
-                "skill": hero.get("skill"),
-                "position": len(team),
-                "hp": hero["star5_hp"],
-                "maxHp": hero["star5_hp"],
-                "final_attrs": {
-                    "hp": hero["star5_hp"],
-                    "strength": hero["star5_strength"],
-                    "intelligence": hero["star5_intelligence"],
-                    "speed": hero["star5_speed"]
-                }
-            })
+        rand_hero = random.choice(all_heroes)
+        hero = generate_enemy_hero(rand_hero["id"], enemy_level, star=5)
+        hero["position"] = len(team)
+        team.append(hero)
+    
     return team
 
 def is_node_challenged_today(username: str, challenge_id: str, node_id: int) -> bool:
@@ -197,7 +160,8 @@ async def challenge_node(req: Request):
     if is_node_challenged_today(username, challenge_id, node_id):
         return {"success": False, "msg": "今日已挑战过此副本节点，明日再来"}
     
-    enemy_team = generate_enemy_team(node.get("main_hero_ids", []), node.get("power", 1000))
+    enemy_level = node.get("enemy_level", 1)
+    enemy_team = generate_enemy_team(node.get("main_hero_ids", []), enemy_level)
     
     from web import get_user_team, get_formation_type
     formation_type = get_formation_type(username)
@@ -221,7 +185,6 @@ async def challenge_node(req: Request):
         
         mark_node_challenged(username, challenge_id, node_id)
         
-        # 更新每日任务：副本挑战
         try:
             from core import update_task_progress
             update_task_progress(username, "challenge", 1)

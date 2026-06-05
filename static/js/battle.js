@@ -98,13 +98,13 @@ async function getAllSoundUrls() {
     commonIds.forEach(id => heroIds.add(id));
     const urls = [];
     for (const id of heroIds) {
-        urls.push(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${id}_attack.wav`);
-        urls.push(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${id}_hit.wav`);
+        urls.push(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${id}_attack.wav`);
+        urls.push(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${id}_hit.wav`);
     }
     const commonSounds = [
-        'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/attack_physical.wav', 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/attack_magic.wav',
-        'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heal.wav', 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/crit.wav',
-        'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/victory.wav', 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/defeat.wav'
+        'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/attack_physical.wav', 'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/attack_magic.wav',
+        'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heal.wav', 'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/crit.wav',
+        'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/victory.wav', 'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/defeat.wav'
     ];
     urls.push(...commonSounds);
     return [...new Set(urls)];
@@ -127,8 +127,8 @@ async function unlockAndDecodeSounds() {
 
 async function ensureBattleSoundsReady(attackerId, targetId) {
     const neededUrls = [
-        `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`,
-        `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`
+        `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`,
+        `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`
     ];
     const ctx = getAudioContext();
     if (ctx.state === 'suspended') { await ctx.resume(); }
@@ -164,7 +164,7 @@ async function loadSkillAnimations() {
             "照妖鉴": "zhaoyaojian.mp4", "风雷双翼": "fengleishuangyi.mp4", "八九玄功": "bajiuxuangong.mp4",
             "乾坤圈": "qiankunquan.mp4", "攒心钉": "zanxinding.mp4", "金光阵": "jinguangzhen.mp4",
             "开山斧": "kaishanfu.mp4", "飞头术": "feitoushu.mp4", "魅惑": "meihuo.mp4",
-            "雌雄双鞭": "cixiongshuangbian.mp4", "金攥提炉枪": "jinzuan tiluqiang.mp4", "铁嘴神鹰": "tiezuishishenying.mp4",
+            "雌雄双鞭": "cixiongshuangbian.mp4", "金攥提炉枪": "jinzuantiluqiang.mp4", "铁嘴神鹰": "tiezuishishenying.mp4",
             "混元锤": "hunyuanchui.mp4", "六魂幡": "liuhunfan.mp4", "牛黄": "niuhuang.mp4",
             "戮魂幡": "luhunfan.mp4", "五色石": "wuseshi.mp4", "百胜刀": "baishengdao.mp4",
             "仁德": "rende.mp4", "打神鞭": "dashenbian.mp4", "阴阳镜": "yinyangjing.mp4",
@@ -336,8 +336,8 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
             document.body.appendChild(videoPlace);
         }
         videoPlace.innerHTML = '';
-        let currentVideoSrc = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/${videoFile}`;
-        let fallbackVideoSrc = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/season.mp4';
+        let currentVideoSrc = `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/${videoFile}`;
+        let fallbackVideoSrc = 'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/season.mp4';
         let video = document.createElement('video');
         const tryPlay = (src) => {
             video.src = src;
@@ -378,7 +378,7 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
     clone.style.height = startRect.height + 'px';
     clone.style.zIndex = '10000';
     clone.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1)';
-    clone.style.backgroundImage = `url('https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png')`;
+    clone.style.backgroundImage = `url('https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png')`;
     clone.style.backgroundSize = 'contain';
     clone.style.backgroundRepeat = 'no-repeat';
     clone.style.backgroundPosition = 'center';
@@ -414,9 +414,9 @@ async function animateSingleAttack(attackerId, attackerAvatar, targetAvatar, dam
         return;
     }
     const originalTargetSrc = targetAvatar.src;
-    targetAvatar.src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${targetId}_hit.png`;
-    playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
-    playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
+    targetAvatar.src = `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${targetId}_hit.png`;
+    playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
+    playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
     if (!isHeal) showDamageNumber(targetAvatar, damage);
     if (skillType) applySkillEffect(skillType, targetAvatar, attackerAvatar, skillName);
     await new Promise(r => setTimeout(r, 900));
@@ -458,7 +458,7 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
     attackerAvatar.style.transform = transformStr;
     await new Promise(r => setTimeout(r, 500));
     if (window.skipRequested) return;
-    attackerAvatar.src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png`;
+    attackerAvatar.src = `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png`;
     let videoPlace = null;
     let videoFile = skillVideoMap[skillName];
     if (videoFile) {
@@ -470,8 +470,8 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
             document.body.appendChild(videoPlace);
         }
         videoPlace.innerHTML = '';
-        let currentVideoSrc = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/${videoFile}`;
-        let fallbackVideoSrc = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/season.mp4';
+        let currentVideoSrc = `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/${videoFile}`;
+        let fallbackVideoSrc = 'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/videos/season.mp4';
         let video = document.createElement('video');
         const tryPlay = (src) => {
             video.src = src;
@@ -499,7 +499,7 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
         videoPlace.appendChild(video);
         videoPlace.style.display = 'flex';
     }
-    playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
+    playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
     for (let i = 0; i < targetsInfo.length; i++) {
         if (window.skipRequested) break;
         const t = targetsInfo[i];
@@ -507,7 +507,7 @@ async function animateMultiAttack(attackerId, attackerAvatar, targetsInfo, skill
         t.avatar.classList.add('hit-shake');
         showDamageNumber(t.avatar, t.damage);
         applySkillEffect(skillType, t.avatar, attackerAvatar, skillName);
-        playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${t.id}_hit.wav`, 0.5);
+        playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${t.id}_hit.wav`, 0.5);
         await new Promise(r => setTimeout(r, 500));
         t.avatar.classList.remove('hit-shake');
     }
@@ -524,8 +524,8 @@ function updateEnemyPlayerAvatar(avatarUrl, playerName) {
     container.innerHTML = '';
     let div = document.createElement('div');
     div.className = 'enemy-avatar-item';
-    let imgSrc = avatarUrl ? avatarUrl : 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png';
-    div.innerHTML = `<img src="${imgSrc}" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'"><div class="enemy-hp">${playerName || '敌方'}</div>`;
+    let imgSrc = avatarUrl ? avatarUrl : 'https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png';
+    div.innerHTML = `<img src="${imgSrc}" onerror="this.src='https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'"><div class="enemy-hp">${playerName || '敌方'}</div>`;
     container.appendChild(div);
 }
 
@@ -688,8 +688,8 @@ async function playBattleLogWithDelay(log, winner) {
                             if (isNonDamage) {
                                 if (attackerAvatar) {
                                     const originalAttackerSrc = attackerAvatar.src;
-                                    attackerAvatar.src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png`;
-                                    playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
+                                    attackerAvatar.src = `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png`;
+                                    playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
                                     setTimeout(() => {
                                         if (attackerAvatar) attackerAvatar.src = originalAttackerSrc;
                                     }, 1200);
@@ -698,14 +698,14 @@ async function playBattleLogWithDelay(log, winner) {
                                 if (skillType === 'heal') {
                                     for (let t of entry.targets) {
                                         let targetId = getHeroId(t.name, {});
-                                        playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
+                                        playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
                                         let avatar = getHeroAvatarDiv(t.team, t.name);
                                         if (avatar) showDamageNumber(avatar, t.damage, true);
                                     }
                                 } else {
                                     for (let t of entry.targets) {
                                         let targetId = getHeroId(t.name, {});
-                                        playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.5);
+                                        playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.5);
                                     }
                                 }
                                 for (let t of entry.targets) {
@@ -760,8 +760,8 @@ async function playBattleLogWithDelay(log, winner) {
                             if (isBuff || isHeal || isShield) {
                                 if (attackerAvatar) {
                                     const originalAttackerSrc = attackerAvatar.src;
-                                    attackerAvatar.src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png`;
-                                    playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
+                                    attackerAvatar.src = `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${attackerId}_attack.png`;
+                                    playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${attackerId}_attack.wav`, 0.6);
                                     setTimeout(() => {
                                         if (attackerAvatar) attackerAvatar.src = originalAttackerSrc;
                                     }, 1200);
@@ -769,11 +769,11 @@ async function playBattleLogWithDelay(log, winner) {
                                 showSkillName(skillName, 2000);
                                 if (isHeal) {
                                     let targetId = getHeroId(targetName, {});
-                                    playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
+                                    playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.6);
                                     if (targetAvatar) showDamageNumber(targetAvatar, damage, true);
                                 } else {
                                     let targetId = getHeroId(targetName, {});
-                                    playSound(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.5);
+                                    playSound(`https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/sounds/heroes/${targetId}_hit.wav`, 0.5);
                                 }
                                 if (targetAvatar) {
                                     let container = targetAvatar.closest('.hero-card-mini') || targetAvatar;
@@ -917,11 +917,11 @@ function renderOneGrid(gridId, team) {
             if (slot) {
                 let percent = (hero.hp / hero.maxHp) * 100;
                 let isDead = hero.hp <= 0;
-                let avatarUrl = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${hero.id || hero.name}.png`;
+                let avatarUrl = `https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${hero.id || hero.name}.png`;
                 // 不显示个体等级
                 slot.innerHTML = `
                     <div class="hero-card-mini ${isDead ? 'dead' : ''}">
-                        <img class="hero-avatar-mini" src="${avatarUrl}" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'">
+                        <img class="hero-avatar-mini" src="${avatarUrl}" onerror="this.src='https://testingcf.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'">
                         <div class="hero-name-mini">${hero.name}</div>
                         <div class="hero-hp-mini">❤️ ${hero.hp}/${hero.maxHp}</div>
                         <div class="hero-hp-bar"><div class="hero-hp-fill" style="width:${percent}%"></div></div>

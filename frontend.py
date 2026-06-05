@@ -7,7 +7,7 @@ def get_html():
     <title>截教 · 碧游宫</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    <link rel="stylesheet" href="/static/css/battle.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/css/battle.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { background: #0a0f1a; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; height: 100vh; overflow: hidden; }
@@ -118,7 +118,21 @@ def get_html():
         .my-rank-info { margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 12px; text-align: center; font-weight: bold; color: gold; }
         #preloadProgressBar { position: fixed; top: 70px; left: 0; width: 100%; height: 4px; background: rgba(0,0,0,0.5); z-index: 10004; display: none; }
         #preloadProgressFill { width: 0%; height: 100%; background: linear-gradient(90deg, #d99e3e, gold); transition: width 0.3s; }
-        
+        #avatarList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .avatar-item {
+            transition: transform 0.1s;
+        }
+        .avatar-item:hover {
+            transform: scale(1.05);
+        }
 @media (max-width: 768px) {
     /* ========== 顶部栏：两行布局 ========== */
     .top-bar {
@@ -608,7 +622,7 @@ def get_html():
     </div>
     <div class="top-bar">
         <div class="user-info">
-            <img id="userAvatar" class="user-avatar" src="/static/images/avatars/hero.png" onerror="this.src='/static/images/avatars/hero.png'" onclick="showAvatarModal()">
+            <img id="userAvatar" class="user-avatar" src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png'" onclick="showAvatarModal()">
             <div style="display: flex; align-items: center;">
                 <span id="userName" class="user-name">加载中...</span>
             </div>
@@ -689,7 +703,7 @@ def get_html():
                         <p>经验: <span id="playerExp">0</span></p>
                         <div id="occupierDisplay">
                             <div style="display:flex; align-items:center; gap:10px; margin:10px 0;">
-                                <img id="occupierAvatar" src="/static/images/avatars/hero.png" style="width:45px; border-radius:50%;" onerror="this.src='/static/images/avatars/hero.png'">
+                                <img id="occupierAvatar" src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png" style="width:45px; border-radius:50%;" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png'">
                                 <span id="occupierName">无</span>
                             </div>
                             <button id="selfReleaseBtn" style="display:none;" onclick="selfRelease()">🔓 解救自己</button>
@@ -763,7 +777,7 @@ def get_html():
     <div id="friendPanel" class="friend-panel" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;"><h4 style="margin:0;">👥 好友列表</h4><button onclick="toggleFriendPanel()" style="padding:2px 8px;">🗕</button></div>
         <div style="max-height:400px; overflow-y:auto; margin-top:10px;">
-            <div class="friend-item self-item"><div style="display:flex; align-items:center; gap:10px;"><img src="/static/images/avatars/hero.png" class="friend-avatar" id="selfAvatar" onerror="this.src='/static/images/avatars/hero.png'"><span style="font-weight:bold;">我（<span id="selfName"></span>）</span></div><button onclick="soloPracticeFromFriend()" style="background:#5a7a5a;">🏋️ 自我切磋</button></div>
+            <div class="friend-item self-item"><div style="display:flex; align-items:center; gap:10px;"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png" class="friend-avatar" id="selfAvatar" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png'"><span style="font-weight:bold;">我（<span id="selfName"></span>）</span></div><button onclick="soloPracticeFromFriend()" style="background:#5a7a5a;">🏋️ 自我切磋</button></div>
             <div id="friendListContainer"></div><div id="noFriendsMsg" style="color:#aaa; text-align:center; padding:10px; display:none;">暂无好友，去添加吧~</div>
         </div>
         <div style="margin-top:10px; display:flex; gap:5px;"><input id="addFriendInput" placeholder="输入用户名" style="flex:1; background:#f0ede8; color:#333;"><button onclick="sendFriendRequest()" style="background:#b38f40;">添加</button></div>
@@ -779,7 +793,7 @@ def get_html():
     </div>
 </div>
 
-<script src="/static/js/battle.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/js/battle.js"></script>
 <script>
 // ========== 全局变量 ==========
 let ws = null;
@@ -809,19 +823,19 @@ async function collectPreloadUrls() {
             const data = await res.json();
             if (data.heroes) {
                 for (const hero of data.heroes) {
-                    urls.add(`/static/images/heroes/${hero.id}.png`);
-                    urls.add(`/static/images/heroes/${hero.id}_attack.png`);
-                    urls.add(`/static/images/heroes/${hero.id}_hit.png`);
+                    urls.add(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${hero.id}.png`);
+                    urls.add(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${hero.id}_attack.png`);
+                    urls.add(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${hero.id}_hit.png`);
                 }
             }
         } catch(e) { console.warn('获取武将列表失败', e); }
     }
-    const bgList = ['/static/images/bg/challenge_jinao.jpg','/static/images/bg/challenge_sanxian.jpg','/static/images/bg/lianxianzhen.jpg','/static/images/bg/bagualu.jpg','/static/images/bg/biyougong.jpg','/static/images/bg/wanxiandian.jpg','/static/images/bg/battle_bg.jpg'];
+    const bgList = ['https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/challenge_jinao.jpg','https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/challenge_sanxian.jpg','https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/lianxianzhen.jpg','https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/bagualu.jpg','https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/biyougong.jpg','https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/wanxiandian.jpg','https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/battle_bg.jpg'];
     for (const bg of bgList) urls.add(bg);
     const gemList = ['strength.png','intelligence.png','speed.png','hp.png','double.png'];
-    for (const gem of gemList) urls.add(`/static/images/gems/${gem}`);
-    urls.add('/static/images/avatars/hero.png');
-    urls.add('/static/images/heroes/hero.png');
+    for (const gem of gemList) urls.add(`https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/gems/${gem}`);
+    urls.add('https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png');
+    urls.add('https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png');
     return Array.from(urls);
 }
 
@@ -875,16 +889,16 @@ function setCachedBackground(bgUrl) {
 }
 function setBackgroundByTab(tab) {
     let bgUrl = '';
-    switch (tab) { case 'map': bgUrl = '/static/images/bg/challenge_jinao.jpg'; break; case 'formation': bgUrl = '/static/images/bg/lianxianzhen.jpg'; break; case 'gems': bgUrl = '/static/images/bg/bagualu.jpg'; break; case 'city': bgUrl = '/static/images/bg/biyougong.jpg'; break; case 'recruit': bgUrl = '/static/images/bg/wanxiandian.jpg'; break; default: bgUrl = ''; }
+    switch (tab) { case 'map': bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/challenge_jinao.jpg'; break; case 'formation': bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/lianxianzhen.jpg'; break; case 'gems': bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/bagualu.jpg'; break; case 'city': bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/biyougong.jpg'; break; case 'recruit': bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/wanxiandian.jpg'; break; default: bgUrl = ''; }
     if (bgUrl) setCachedBackground(bgUrl);
 }
 function updateChallengeBackground() {
     let selectedId = document.getElementById('challengeSelect')?.value;
     let bgUrl = '';
-    if (selectedId === 'jinao') bgUrl = '/static/images/bg/challenge_jinao.jpg';
-    else if (selectedId === 'sanxian') bgUrl = '/static/images/bg/challenge_sanxian.jpg';
-    else if (selectedId === 'yuxu') bgUrl = '/static/images/bg/challenge_kunlun.jpg';
-    else if (selectedId === 'bajing') bgUrl = '/static/images/bg/challenge_kongtong.jpg';
+    if (selectedId === 'jinao') bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/challenge_jinao.jpg';
+    else if (selectedId === 'sanxian') bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/challenge_sanxian.jpg';
+    else if (selectedId === 'yuxu') bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/challenge_kunlun.jpg';
+    else if (selectedId === 'bajing') bgUrl = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/bg/challenge_kongtong.jpg';
     if (bgUrl) setCachedBackground(bgUrl);
 }
 
@@ -986,7 +1000,7 @@ document.getElementById('switchAuthBtn').onclick = () => {
 };
 
 async function loadUserResources() { let r = await fetch(`/user_resources?username=${currentUser}`); let d = await r.json(); if (d.success) { document.getElementById('userGold').innerText = d.gold; document.getElementById('userIngots').innerText = d.ingots; } }
-async function loadUserAvatar() { let r = await fetch(`/user_info?username=${currentUser}`); let d = await r.json(); if (d.success && d.avatar) document.getElementById('userAvatar').src = `/static/images/avatars/${d.avatar}`; else document.getElementById('userAvatar').src = '/static/images/avatars/hero.png'; }
+async function loadUserAvatar() { let r = await fetch(`/user_info?username=${currentUser}`); let d = await r.json(); if (d.success && d.avatar) document.getElementById('userAvatar').src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${d.avatar}`; else document.getElementById('userAvatar').src = 'https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png'; }
 
 // ========== WebSocket ==========
 function connectWebSocket() {
@@ -1085,7 +1099,7 @@ async function loadChallengeNodes(challengeId) {
         let n = nodes[i]; 
         let heroAvatars = '';
         for (let hid of (n.main_hero_ids || [])) 
-            heroAvatars += `<img src="/static/images/heroes/${hid}.png" onerror="this.src='/static/images/heroes/hero.png'" style="width:40px; height:40px; border-radius:50%; margin:2px; border:1px solid gold;">`;
+            heroAvatars += `<img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${hid}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'" style="width:40px; height:40px; border-radius:50%; margin:2px; border:1px solid gold;">`;
         let div = document.createElement('div'); 
         div.className = 'node-card'; 
         div.onclick = () => challengeNode(n.node_id);
@@ -1119,7 +1133,7 @@ function renderFormationGrid() {
         let hero = myFormation.find(f => f.position === i);
         let slotDiv = document.createElement('div'); slotDiv.className = 'formation-slot';
         if (!isAvailable) { slotDiv.classList.add('disabled-slot'); slotDiv.innerHTML = '<div class="empty-slot">🔒</div>'; }
-        else if (hero) { let heroId = heroIdMap[hero.name] || hero.name; slotDiv.innerHTML = `<div class="formation-hero"><img src="/static/images/heroes/${heroId}.png" onerror="this.src='/static/images/heroes/hero.png'"><div class="formation-hero-name">${hero.name}</div></div>`; slotDiv.onclick = () => removeFromFormation(i); }
+        else if (hero) { let heroId = heroIdMap[hero.name] || hero.name; slotDiv.innerHTML = `<div class="formation-hero"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${heroId}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'"><div class="formation-hero-name">${hero.name}</div></div>`; slotDiv.onclick = () => removeFromFormation(i); }
         else { slotDiv.innerHTML = '<div class="empty-slot">⚡</div>'; slotDiv.onclick = () => selectHeroForSlot(i); }
         container.appendChild(slotDiv);
     }
@@ -1130,7 +1144,7 @@ async function selectHeroForSlot(realPosition) {
     if (!activeSlots.includes(realPosition)) { addLog("❌ 该位置不可用，请选择激活的格子"); return; }
     let r = await fetch(`/my_heroes?username=${currentUser}`); let d = await r.json(); let heroes = d.heroes; heroes.sort((a,b)=>b.level - a.level);
     let modal = document.createElement('div'); modal.className = 'modal';
-    modal.innerHTML = `<div class="modal-content"><h3>选择武将</h3><div class="gem-grid" id="heroSelectList">${heroes.map(h => `<div class="hero-card" data-name="${h.name}" data-id="${h.id}"><img src="/static/images/heroes/${h.id}.png" onerror="this.src='/static/images/heroes/hero.png'"><div>${h.name}</div><div>Lv.${h.level} ★${h.star}</div></div>`).join('')}</div><button onclick="this.parentElement.parentElement.remove()">取消</button></div>`;
+    modal.innerHTML = `<div class="modal-content"><h3>选择武将</h3><div class="gem-grid" id="heroSelectList">${heroes.map(h => `<div class="hero-card" data-name="${h.name}" data-id="${h.id}"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${h.id}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'"><div>${h.name}</div><div>Lv.${h.level} ★${h.star}</div></div>`).join('')}</div><button onclick="this.parentElement.parentElement.remove()">取消</button></div>`;
     document.body.appendChild(modal);
     document.querySelectorAll('#heroSelectList .hero-card').forEach(card => { card.onclick = () => { let heroName = card.dataset.name; let existingIndex = myFormation.findIndex(f => f.name === heroName); if (existingIndex !== -1) myFormation.splice(existingIndex, 1); myFormation.push({ name: heroName, position: realPosition }); saveFormation(); modal.remove(); }; });
 }
@@ -1145,7 +1159,7 @@ function renderGemShop() {
     let container = document.getElementById('gemShopContainer'); if (!container) return;
     let html = '';
     for (let gem of shopGems) {
-        html += `<div class="gem-card" style="width: 150px;"><img src="/static/images/gems/${gem.icon}" onerror="this.src='/static/images/gems/gem.png'" style="width: 50px;"><div class="gem-name">${gem.name}</div><div>★1星 +随机1-2</div><div>价格: 1 💎/个</div><div class="shop-qty-control"><button class="shop-qty-down" data-type="${gem.type}">-</button><span id="shop_qty_${gem.type}" style="min-width: 30px;">1</span><button class="shop-qty-up" data-type="${gem.type}">+</button></div><button class="shop-buy-btn" data-type="${gem.type}" style="background: #d99e3e; width: 100%;">购买</button></div>`;
+        html += `<div class="gem-card" style="width: 150px;"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/gems/${gem.icon}" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/gems/gem.png'" style="width: 50px;"><div class="gem-name">${gem.name}</div><div>★1星 +随机1-2</div><div>价格: 1 💎/个</div><div class="shop-qty-control"><button class="shop-qty-down" data-type="${gem.type}">-</button><span id="shop_qty_${gem.type}" style="min-width: 30px;">1</span><button class="shop-qty-up" data-type="${gem.type}">+</button></div><button class="shop-buy-btn" data-type="${gem.type}" style="background: #d99e3e; width: 100%;">购买</button></div>`;
     }
     container.innerHTML = html;
     document.querySelectorAll('.shop-qty-up').forEach(btn => { btn.onclick = (e) => { let type = btn.dataset.type; let span = document.getElementById(`shop_qty_${type}`); let val = parseInt(span.innerText) || 1; if (val < 99) span.innerText = val + 1; }; });
@@ -1183,7 +1197,7 @@ async function loadGems() {
         }
         let div = document.createElement('div');
         div.className = 'gem-card';
-        div.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center;"><img src="/static/images/gems/${iconFile}" onerror="this.src='/static/images/gems/gem.png'" style="width:40px; height:40px; object-fit:contain;"><strong style="font-size:12px;">${nameText}</strong><span style="font-size:11px;">${detailText}</span><span style="font-size:10px;">数量: ${g.count}</span><button class="discard-gem-btn" data-id="${g.id}" style="margin-top:4px; padding:2px 8px; font-size:11px; background:#8a5a5a;">🗑️ 丢弃</button></div>`;
+        div.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center;"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/gems/${iconFile}" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/gems/gem.png'" style="width:40px; height:40px; object-fit:contain;"><strong style="font-size:12px;">${nameText}</strong><span style="font-size:11px;">${detailText}</span><span style="font-size:10px;">数量: ${g.count}</span><button class="discard-gem-btn" data-id="${g.id}" style="margin-top:4px; padding:2px 8px; font-size:11px; background:#8a5a5a;">🗑️ 丢弃</button></div>`;
         bagDiv.appendChild(div);
     });
     document.querySelectorAll('.discard-gem-btn').forEach(btn => { btn.onclick = async (e) => { e.stopPropagation(); let gemId = btn.dataset.id; if (confirm("确定要丢弃一颗该宝石吗？")) { let resp = await fetch('/discard_gem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, gem_id: gemId }) }); let data = await resp.json(); if (data.success) { addLog(`🗑️ 已丢弃一颗${btn.parentElement.querySelector('strong')?.innerText || '宝石'}`); await loadGems(); } else alert(data.msg); } }; });
@@ -1217,15 +1231,15 @@ async function loadGems() {
 async function decomposeGem() { let gemId = document.getElementById('decomposeSelect').value; if (!gemId) { alert("请选择宝石"); return; } let r = await fetch('/decompose_gem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, gem_id: gemId }) }); let d = await r.json(); if (d.success) { addLog(`✨ 分解成功，获得两颗2星宝石`); await loadGems(); } else alert(d.msg); }
 
 // ========== 武将系统 ==========
-async function openMyHeroes() { if (!currentUser) { alert("请先登录"); return; } let r = await fetch(`/my_heroes?username=${currentUser}`); let d = await r.json(); let cont = document.getElementById('myHeroesList'); if (!cont) { console.error("myHeroesList 元素不存在"); return; } cont.innerHTML = ''; for (let h of d.heroes) { let skillName = '未知技能'; try { let detailResp = await fetch(`/hero_detail?username=${currentUser}&hero=${h.name}`); let detail = await detailResp.json(); if (detail.success && detail.skill_name) skillName = detail.skill_name; } catch(e) { console.warn(e); } let div = document.createElement('div'); div.className = 'hero-card'; div.innerHTML = `<img src="/static/images/heroes/${h.id}.png" onerror="this.src='/static/images/heroes/hero.png'"><div><strong>${h.name}</strong></div><div>Lv.${h.level} ★${h.star}</div><div style="font-size: 11px; color: #ffaa66;">✨ ${skillName}</div><div><button onclick="showHeroDetail('${h.name}')">详情</button><button onclick="dismissHero('${h.name}')">遣散</button></div>`; cont.appendChild(div); } let modal = document.getElementById('myHeroesModal'); if (modal) modal.style.display = 'flex'; }
+async function openMyHeroes() { if (!currentUser) { alert("请先登录"); return; } let r = await fetch(`/my_heroes?username=${currentUser}`); let d = await r.json(); let cont = document.getElementById('myHeroesList'); if (!cont) { console.error("myHeroesList 元素不存在"); return; } cont.innerHTML = ''; for (let h of d.heroes) { let skillName = '未知技能'; try { let detailResp = await fetch(`/hero_detail?username=${currentUser}&hero=${h.name}`); let detail = await detailResp.json(); if (detail.success && detail.skill_name) skillName = detail.skill_name; } catch(e) { console.warn(e); } let div = document.createElement('div'); div.className = 'hero-card'; div.innerHTML = `<img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${h.id}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'"><div><strong>${h.name}</strong></div><div>Lv.${h.level} ★${h.star}</div><div style="font-size: 11px; color: #ffaa66;">✨ ${skillName}</div><div><button onclick="showHeroDetail('${h.name}')">详情</button><button onclick="dismissHero('${h.name}')">遣散</button></div>`; cont.appendChild(div); } let modal = document.getElementById('myHeroesModal'); if (modal) modal.style.display = 'flex'; }
 async function showHeroDetail(heroName) {
     let r = await fetch(`/hero_detail?username=${currentUser}&hero=${heroName}`); let d = await r.json(); if (!d.success) { alert("无法获取详情"); return; }
-    let html = `<div style="text-align:center;"><img src="/static/images/heroes/${d.id}.png" onerror="this.src='/static/images/heroes/hero.png'" style="width:120px;"><h3>${d.name} ★${d.star} Lv.${d.level}</h3><p>经验: ${d.exp}</p><p>自由属性点: ${d.free_points}</p><p>战力: ${d.power}</p><p><strong>技能：</strong><span title="${d.skill_desc || '无'}">${d.skill_name || '无'}</span></p><div class="attr-row"><span>❤️ 生命: ${d.final_attrs.hp}</span><button onclick="allocatePoint('${heroName}','hp')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><div class="attr-row"><span>⚔️ 力量: ${d.final_attrs.strength}</span><button onclick="allocatePoint('${heroName}','strength')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><div class="attr-row"><span>🔮 智力: ${d.final_attrs.intelligence}</span><button onclick="allocatePoint('${heroName}','intelligence')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><div class="attr-row"><span>🏃 敏捷: ${d.final_attrs.speed}</span><button onclick="allocatePoint('${heroName}','speed')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><hr><div>经验药水: <input type="number" id="potionAmount" min="1" value="1" style="width:60px;"><button onclick="useExpPotion('${heroName}')">使用</button></div><h4>宝石镶嵌</h4><div id="gemSlots" style="display:flex; flex-wrap:wrap;"></div><button onclick="dismissHero('${heroName}')" style="margin-top:10px;">遣散</button></div>`;
+    let html = `<div style="text-align:center;"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${d.id}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'" style="width:120px;"><h3>${d.name} ★${d.star} Lv.${d.level}</h3><p>经验: ${d.exp}</p><p>自由属性点: ${d.free_points}</p><p>战力: ${d.power}</p><p><strong>技能：</strong><span title="${d.skill_desc || '无'}">${d.skill_name || '无'}</span></p><div class="attr-row"><span>❤️ 生命: ${d.final_attrs.hp}</span><button onclick="allocatePoint('${heroName}','hp')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><div class="attr-row"><span>⚔️ 力量: ${d.final_attrs.strength}</span><button onclick="allocatePoint('${heroName}','strength')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><div class="attr-row"><span>🔮 智力: ${d.final_attrs.intelligence}</span><button onclick="allocatePoint('${heroName}','intelligence')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><div class="attr-row"><span>🏃 敏捷: ${d.final_attrs.speed}</span><button onclick="allocatePoint('${heroName}','speed')" ${d.free_points <= 0 ? 'disabled' : ''}>+</button></div><hr><div>经验药水: <input type="number" id="potionAmount" min="1" value="1" style="width:60px;"><button onclick="useExpPotion('${heroName}')">使用</button></div><h4>宝石镶嵌</h4><div id="gemSlots" style="display:flex; flex-wrap:wrap;"></div><button onclick="dismissHero('${heroName}')" style="margin-top:10px;">遣散</button></div>`;
     let modal = document.getElementById('heroDetailModal'); document.getElementById('heroDetailContent').innerHTML = html; modal.style.display = 'flex';
     let gemSlots = document.getElementById('gemSlots'); gemSlots.innerHTML = '';
     for (let i = 0; i < 5; i++) {
         let gem = d.gems[i]; let slotDiv = document.createElement('div'); slotDiv.className = 'gem-slot';
-        if (gem) { let gemAttrName = gem.attr === 'strength' ? '⚔️力量' : (gem.attr === 'intelligence' ? '🔮智力' : (gem.attr === 'speed' ? '🏃敏捷' : '❤️生命')); slotDiv.innerHTML = `<div><img src="/static/images/gems/${gem.attr || 'gem'}.png" onerror="this.style.display='none'" style="width:40px;"><div style="font-size:10px;">${gemAttrName}+${gem.value}</div><button class="unequip-gem-btn" data-slot="${i}" style="font-size:10px; padding:2px 4px;">💎 卸下</button></div>`; }
+        if (gem) { let gemAttrName = gem.attr === 'strength' ? '⚔️力量' : (gem.attr === 'intelligence' ? '🔮智力' : (gem.attr === 'speed' ? '🏃敏捷' : '❤️生命')); slotDiv.innerHTML = `<div><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/gems/${gem.attr || 'gem'}.png" onerror="this.style.display='none'" style="width:40px;"><div style="font-size:10px;">${gemAttrName}+${gem.value}</div><button class="unequip-gem-btn" data-slot="${i}" style="font-size:10px; padding:2px 4px;">💎 卸下</button></div>`; }
         else { slotDiv.innerHTML = `<div><div style="width:40px; height:40px; background:#2c3e2f; border-radius:8px; margin:0 auto;"></div><div style="font-size:10px;">空</div><button class="equip-gem-btn" data-slot="${i}" style="font-size:10px; padding:2px 6px;">🔧 镶嵌</button></div>`; }
         gemSlots.appendChild(slotDiv);
     }
@@ -1246,7 +1260,7 @@ async function selectGemForSlot(heroName, slot) {
         if (g.double_attr) iconFile = 'double.png';
         else { if (g.attr === 'strength') iconFile = 'strength.png'; else if (g.attr === 'intelligence') iconFile = 'intelligence.png'; else if (g.attr === 'speed') iconFile = 'speed.png'; else if (g.attr === 'hp') iconFile = 'hp.png'; }
         let nameText = g.double_attr ? `${g.name}+${g.double_attr.attr}` : g.name;
-        gemsHtml += `<div class="gem-card" data-id="${g.id}" style="cursor:pointer;"><div style="display:flex; flex-direction:column; align-items:center;"><img src="/static/images/gems/${iconFile}" style="width:48px; height:48px; object-fit:contain;" onerror="this.style.display='none'"><strong style="font-size:12px;">${nameText}</strong><span style="font-size:11px;">★${g.star} +${g.value}</span><span style="font-size:10px;">数量: ${g.count}</span></div></div>`;
+        gemsHtml += `<div class="gem-card" data-id="${g.id}" style="cursor:pointer;"><div style="display:flex; flex-direction:column; align-items:center;"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/gems/${iconFile}" style="width:48px; height:48px; object-fit:contain;" onerror="this.style.display='none'"><strong style="font-size:12px;">${nameText}</strong><span style="font-size:11px;">★${g.star} +${g.value}</span><span style="font-size:10px;">数量: ${g.count}</span></div></div>`;
     }
     gemsHtml += '</div>';
     modal.innerHTML = `<div class="modal-content"><h3>选择宝石镶嵌到 ${heroName} 的槽位 ${slot+1}</h3>${gemsHtml}<button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;">取消</button></div>`;
@@ -1282,8 +1296,8 @@ async function loadDailyTasks() {
 async function loadCityInfo() {
     let r = await fetch(`/user_info?username=${currentUser}`); let d = await r.json(); if (d.success) { document.getElementById('playerLevel').innerText = d.level; document.getElementById('playerExp').innerText = d.exp; }
     let occ = await fetch(`/get_occupier?username=${currentUser}`); let occd = await occ.json();
-    if (occd.occupier) { let occUser = await fetch(`/user_info?username=${occd.occupier}`); let occUserData = await occUser.json(); document.getElementById('occupierName').innerHTML = `<strong>${occd.occupier}</strong> (占领者)`; document.getElementById('occupierAvatar').src = `/static/images/avatars/${occUserData.avatar || 'hero.png'}`; document.getElementById('selfReleaseBtn').style.display = 'inline-block'; }
-    else { document.getElementById('occupierName').innerHTML = '未被占领'; document.getElementById('occupierAvatar').src = `/static/images/avatars/${d.avatar || 'hero.png'}`; document.getElementById('selfReleaseBtn').style.display = 'none'; }
+    if (occd.occupier) { let occUser = await fetch(`/user_info?username=${occd.occupier}`); let occUserData = await occUser.json(); document.getElementById('occupierName').innerHTML = `<strong>${occd.occupier}</strong> (占领者)`; document.getElementById('occupierAvatar').src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${occUserData.avatar || 'hero.png'}`; document.getElementById('selfReleaseBtn').style.display = 'inline-block'; }
+    else { document.getElementById('occupierName').innerHTML = '未被占领'; document.getElementById('occupierAvatar').src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${d.avatar || 'hero.png'}`; document.getElementById('selfReleaseBtn').style.display = 'none'; }
     loadBranchList(); loadDailyTasks();
 }
 async function selfRelease() { let r = await fetch('/self_release', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) }); let d = await r.json(); if (d.success) { addLog(d.msg); loadCityInfo(); loadFriendList(); } else alert(d.msg); }
@@ -1300,7 +1314,7 @@ async function loadBranchList() {
     let html = '';
     for (let b of d.list) {
         html += `<div class="branch-card" data-friend="${b.name}">
-            <img src="/static/images/heroes/${b.avatar}" style="width:40px;border-radius:50%;cursor:pointer;" onclick="visitFriendPalace('${b.name}')" onerror="this.src='/static/images/heroes/hero.png'">
+            <img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${b.avatar}" style="width:40px;border-radius:50%;cursor:pointer;" onclick="visitFriendPalace('${b.name}')" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'">
             <div style="flex:1;">${b.name}</div>
             <div>⏰ 已占领</div>
             <button class="branch-recruit-btn" data-friend="${b.name}">🏛️ 参观万仙殿</button>
@@ -1345,13 +1359,13 @@ async function loadBranchList() {
 function checkSelfOccupied() { loadCityInfo(); }
 
 // ========== 访问好友碧游宫和万仙殿 ==========
-async function visitFriendPalace(friendName) { let existingModal = document.querySelector('.modal'); if (existingModal) existingModal.remove(); let r = await fetch(`/friend_palace_info?username=${currentUser}&friend=${friendName}`); let d = await r.json(); if (!d.success) { alert(d.msg || "无法获取好友碧游宫信息"); return; } let modal = document.createElement('div'); modal.className = 'modal'; modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>🏯 ${friendName} 的碧游宫</h3><img src="/static/images/avatars/${d.avatar}" style="width:80px; border-radius:50%; margin:10px auto; display:block;" onerror="this.src='/static/images/avatars/hero.png'"><p>🌟 等级: ${d.level}</p><p>👑 占领者: ${d.occupier || '无'}</p><p>📜 分舵数量: ${d.branches}</p><button onclick="this.closest('.modal').remove()" style="margin-top:15px;">关闭</button></div>`; document.body.appendChild(modal); }
+async function visitFriendPalace(friendName) { let existingModal = document.querySelector('.modal'); if (existingModal) existingModal.remove(); let r = await fetch(`/friend_palace_info?username=${currentUser}&friend=${friendName}`); let d = await r.json(); if (!d.success) { alert(d.msg || "无法获取好友碧游宫信息"); return; } let modal = document.createElement('div'); modal.className = 'modal'; modal.innerHTML = `<div class="modal-content" style="text-align:center;"><h3>🏯 ${friendName} 的碧游宫</h3><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${d.avatar}" style="width:80px; border-radius:50%; margin:10px auto; display:block;" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png'"><p>🌟 等级: ${d.level}</p><p>👑 占领者: ${d.occupier || '无'}</p><p>📜 分舵数量: ${d.branches}</p><button onclick="this.closest('.modal').remove()" style="margin-top:15px;">关闭</button></div>`; document.body.appendChild(modal); }
 async function viewFriendRecruit(friendName) {
     let r = await fetch(`/recruit/other_shop?username=${currentUser}&target=${friendName}`); let d = await r.json(); if (d.error) { alert(d.error); return; }
     let modal = document.createElement('div'); modal.className = 'modal';
     let shopHtml = '<div class="hero-grid">';
     if (Object.keys(d.shop).length === 0) shopHtml += '<div style="text-align:center; padding:20px;">🏛️ 万仙殿空空如也，暂无武将可招募</div>';
-    else { for (let [name, info] of Object.entries(d.shop)) { shopHtml += `<div class="recruit-card" data-name="${name}"><img src="/static/images/heroes/${info.hero_id}.png" onerror="this.src='/static/images/heroes/hero.png'"><div>${name}</div><div>★${info.star}</div><div>💰${info.cost}</div><button class="hire-from-occupied" data-name="${name}">招募</button></div>`; } }
+    else { for (let [name, info] of Object.entries(d.shop)) { shopHtml += `<div class="recruit-card" data-name="${name}"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${info.hero_id}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'"><div>${name}</div><div>★${info.star}</div><div>💰${info.cost}</div><button class="hire-from-occupied" data-name="${name}">招募</button></div>`; } }
     shopHtml += '</div>';
     modal.innerHTML = `<div class="modal-content"><h3>🏛️ ${d.target || friendName} 的万仙殿（分舵）</h3>${shopHtml}<button onclick="this.parentElement.parentElement.remove()" style="margin-top:15px;">关闭</button></div>`;
     document.body.appendChild(modal);
@@ -1372,20 +1386,20 @@ async function viewFriendRecruit(friendName) {
 }
 
 // ========== 招贤馆 ==========
-async function openRecruitShop() { if (!currentUser) { alert("请先登录"); return; } let mainContent = document.getElementById('mainContent'); if (mainContent) mainContent.style.display = 'none'; let infoDiv = document.getElementById('recruitShopInfo'); let heroesDiv = document.getElementById('recruitHeroes'); if (!infoDiv || !heroesDiv) { alert("页面错误，请联系管理员"); return; } let r = await fetch(`/recruit/shop?username=${currentUser}`); let d = await r.json(); if (d.error) { alert(d.error); return; } infoDiv.innerHTML = `<p>💰 金币: ${d.gold}</p><p>下次刷新: ${new Date(d.next_refresh).toLocaleTimeString()}</p>`; heroesDiv.innerHTML = ''; if (d.shop && Object.keys(d.shop).length > 0) { for (let [name, info] of Object.entries(d.shop)) { let div = document.createElement('div'); div.className = 'recruit-card'; div.innerHTML = `<img src="/static/images/heroes/${info.hero_id}.png" onerror="this.src='/static/images/heroes/hero.png'" style="width:80px;"><br>${name}<br>★${info.star}<br>💰${info.cost}<br><button onclick="hireHero('${name}')">招募</button>`; heroesDiv.appendChild(div); } } else { heroesDiv.innerHTML = '<div style="color:gold; text-align:center; padding:20px;">暂无武将，请稍后刷新</div>'; } document.getElementById('recruitShopModal').style.display = 'flex'; setBackgroundByTab('recruit'); document.body.style.overflow = 'hidden'; loadPrayStatus(); bindPrayButtons(); }
+async function openRecruitShop() { if (!currentUser) { alert("请先登录"); return; } let mainContent = document.getElementById('mainContent'); if (mainContent) mainContent.style.display = 'none'; let infoDiv = document.getElementById('recruitShopInfo'); let heroesDiv = document.getElementById('recruitHeroes'); if (!infoDiv || !heroesDiv) { alert("页面错误，请联系管理员"); return; } let r = await fetch(`/recruit/shop?username=${currentUser}`); let d = await r.json(); if (d.error) { alert(d.error); return; } infoDiv.innerHTML = `<p>💰 金币: ${d.gold}</p><p>下次刷新: ${new Date(d.next_refresh).toLocaleTimeString()}</p>`; heroesDiv.innerHTML = ''; if (d.shop && Object.keys(d.shop).length > 0) { for (let [name, info] of Object.entries(d.shop)) { let div = document.createElement('div'); div.className = 'recruit-card'; div.innerHTML = `<img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${info.hero_id}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'" style="width:80px;"><br>${name}<br>★${info.star}<br>💰${info.cost}<br><button onclick="hireHero('${name}')">招募</button>`; heroesDiv.appendChild(div); } } else { heroesDiv.innerHTML = '<div style="color:gold; text-align:center; padding:20px;">暂无武将，请稍后刷新</div>'; } document.getElementById('recruitShopModal').style.display = 'flex'; setBackgroundByTab('recruit'); document.body.style.overflow = 'hidden'; loadPrayStatus(); bindPrayButtons(); }
 async function hireHero(heroName) { let r = await fetch('/recruit/hire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, hero_name: heroName }) }); let d = await r.json(); if (d.success) { addLog(`🎉 招募成功！获得 ${d.star}星 ${heroName}`); await loadUserResources(); openRecruitShop(); openMyHeroes(); } else alert(d.msg); }
 function closeRecruitShop() { document.getElementById('recruitShopModal').style.display = 'none'; document.body.style.overflow = ''; let mainContent = document.getElementById('mainContent'); if (mainContent) mainContent.style.display = 'block'; let activeTab = document.querySelector('.tab-btn.active')?.dataset.tab; if (activeTab) setBackgroundByTab(activeTab); else setBackgroundByTab('map'); }
 async function refreshRecruitShop() { let r = await fetch('/recruit/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, use_gold: true }) }); let d = await r.json(); if (d.success) { addLog(`🔄 刷新招贤馆，消耗100金币`); openRecruitShop(); } else alert(d.msg); }
 
 // ========== 祈愿系统 ==========
 async function loadPrayStatus() { if (!currentUser) return; try { const res = await fetch(`/pray/status?username=${currentUser}`); const data = await res.json(); if (data.success) { const remainSpan = document.getElementById('prayRemainCount'); if (remainSpan) { remainSpan.innerText = `今日剩余: ${data.remainCount}/10`; } } } catch (e) { console.warn('加载祈愿状态失败', e); } }
-async function pray(prayType) { if (!currentUser) { alert("请先登录"); return; } const resultDiv = document.getElementById('prayResult'); resultDiv.innerHTML = "⏳ 祈祷中..."; try { const res = await fetch('/pray/burn_incense', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, pray_type: prayType }) }); const data = await res.json(); if (data.success) { resultDiv.innerHTML = `✅ ${data.msg}`; await loadUserResources(); if (data.reward && data.reward.type === 'hero') { const recruitRes = await fetch(`/recruit/shop?username=${currentUser}`); const shopData = await recruitRes.json(); if (!shopData.error) { const heroesDiv = document.getElementById('recruitHeroes'); if (heroesDiv && shopData.shop) { heroesDiv.innerHTML = ''; for (let [name, info] of Object.entries(shopData.shop)) { let div = document.createElement('div'); div.className = 'recruit-card'; div.innerHTML = `<img src="/static/images/heroes/${info.hero_id}.png" onerror="this.src='/static/images/heroes/hero.png'" style="width:80px;"><br>${name}<br>★${info.star}<br>💰${info.cost}<br><button onclick="hireHero('${name}')">招募</button>`; heroesDiv.appendChild(div); } } } } await loadPrayStatus(); } else { resultDiv.innerHTML = `❌ ${data.msg}`; } } catch (err) { resultDiv.innerHTML = `⚠️ 网络错误: ${err.message}`; } setTimeout(() => { if (resultDiv.innerHTML !== "⏳ 祈祷中...") setTimeout(() => { resultDiv.innerHTML = ''; }, 3000); }, 2000); }
+async function pray(prayType) { if (!currentUser) { alert("请先登录"); return; } const resultDiv = document.getElementById('prayResult'); resultDiv.innerHTML = "⏳ 祈祷中..."; try { const res = await fetch('/pray/burn_incense', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, pray_type: prayType }) }); const data = await res.json(); if (data.success) { resultDiv.innerHTML = `✅ ${data.msg}`; await loadUserResources(); if (data.reward && data.reward.type === 'hero') { const recruitRes = await fetch(`/recruit/shop?username=${currentUser}`); const shopData = await recruitRes.json(); if (!shopData.error) { const heroesDiv = document.getElementById('recruitHeroes'); if (heroesDiv && shopData.shop) { heroesDiv.innerHTML = ''; for (let [name, info] of Object.entries(shopData.shop)) { let div = document.createElement('div'); div.className = 'recruit-card'; div.innerHTML = `<img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/${info.hero_id}.png" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/heroes/hero.png'" style="width:80px;"><br>${name}<br>★${info.star}<br>💰${info.cost}<br><button onclick="hireHero('${name}')">招募</button>`; heroesDiv.appendChild(div); } } } } await loadPrayStatus(); } else { resultDiv.innerHTML = `❌ ${data.msg}`; } } catch (err) { resultDiv.innerHTML = `⚠️ 网络错误: ${err.message}`; } setTimeout(() => { if (resultDiv.innerHTML !== "⏳ 祈祷中...") setTimeout(() => { resultDiv.innerHTML = ''; }, 3000); }, 2000); }
 function bindPrayButtons() { document.querySelectorAll('.pray-btn').forEach(btn => { btn.onclick = () => { const type = btn.dataset.type; pray(type); }; }); }
 
 // ========== 好友面板 ==========
 async function loadFriendList() { let r = await fetch(`/api/friends?username=${currentUser}`); let d = await r.json(); if (d.success) { friendsList = d.friends || []; renderFriendList(); } }
-function renderFriendList() { let container = document.getElementById('friendListContainer'); let noMsg = document.getElementById('noFriendsMsg'); if (!container) return; if (friendsList.length === 0) { container.innerHTML = ''; noMsg.style.display = 'block'; return; } noMsg.style.display = 'none'; container.innerHTML = ''; let displayFriends = friendsList.slice(0,50); for (let f of displayFriends) { let div = document.createElement('div'); div.className = 'friend-item'; div.innerHTML = `<div style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;" onclick="showFriendActions('${f.name}')"><img src="/static/images/avatars/${f.avatar || 'hero.png'}" class="friend-avatar" onerror="this.src='/static/images/avatars/hero.png'"><div><div class="friend-name">${f.name}</div><div class="friend-status">${f.online ? '🟢 在线' : '⚫ 离线'}</div></div></div><div class="friend-actions"><button onclick="showFriendActions('${f.name}')">📋</button></div>`; container.appendChild(div); } }
-async function setSelfInfo() { let r = await fetch(`/user_info?username=${currentUser}`); let d = await r.json(); if (d.success) { document.getElementById('selfName').innerText = currentUser; document.getElementById('selfAvatar').src = `/static/images/avatars/${d.avatar}`; } }
+function renderFriendList() { let container = document.getElementById('friendListContainer'); let noMsg = document.getElementById('noFriendsMsg'); if (!container) return; if (friendsList.length === 0) { container.innerHTML = ''; noMsg.style.display = 'block'; return; } noMsg.style.display = 'none'; container.innerHTML = ''; let displayFriends = friendsList.slice(0,50); for (let f of displayFriends) { let div = document.createElement('div'); div.className = 'friend-item'; div.innerHTML = `<div style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;" onclick="showFriendActions('${f.name}')"><img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${f.avatar || 'hero.png'}" class="friend-avatar" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png'"><div><div class="friend-name">${f.name}</div><div class="friend-status">${f.online ? '🟢 在线' : '⚫ 离线'}</div></div></div><div class="friend-actions"><button onclick="showFriendActions('${f.name}')">📋</button></div>`; container.appendChild(div); } }
+async function setSelfInfo() { let r = await fetch(`/user_info?username=${currentUser}`); let d = await r.json(); if (d.success) { document.getElementById('selfName').innerText = currentUser; document.getElementById('selfAvatar').src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${d.avatar}`; } }
 function showFriendActions(friendName) { document.querySelectorAll('.modal').forEach(m=>m.remove()); let modal = document.createElement('div'); modal.className = 'modal'; modal.innerHTML = `<div class="modal-content" style="max-width:400px;"><h3>⚔️ 与 ${friendName} 互动</h3><div class="modal-friend-actions"><button onclick="closeModal(this); privateChat('${friendName}')">💬 私聊</button><button onclick="closeModal(this); matchWithFriend('${friendName}')">⚔️ 切磋</button><button id="occupyBtn_${friendName}" onclick="closeModal(this); attemptOccupy('${friendName}')">🏰 占领</button><button id="rescueBtn_${friendName}" onclick="closeModal(this); attemptRescue('${friendName}')">🔓 解救</button><button onclick="closeModal(this); visitFriendPalace('${friendName}')">🏯 访问</button><button onclick="closeModal(this); deleteFriendConfirm('${friendName}')">🗑️ 删除</button><button onclick="closeModal(this); addToBlacklist('${friendName}')">🚫 拉黑</button><button id="robBtn_${friendName}" onclick="closeModal(this); robOccupied('${friendName}')">⚔️ 抢夺</button></div><div style="text-align:center;margin-top:20px;"><button onclick="closeModal(this)">关闭</button></div></div>`; document.body.appendChild(modal); updateOccupyRescueButtons(friendName); }
 async function updateOccupyRescueButtons(friendName) { let r = await fetch(`/get_occupier?username=${friendName}`); let d = await r.json(); let occupier = d.occupier; let occupyBtn = document.getElementById(`occupyBtn_${friendName}`); let rescueBtn = document.getElementById(`rescueBtn_${friendName}`); let robBtn = document.getElementById(`robBtn_${friendName}`); if (occupyBtn) { if (occupier) { occupyBtn.disabled = true; occupyBtn.title = `${friendName} 已被 ${occupier} 占领`; occupyBtn.style.opacity = '0.5'; } else { occupyBtn.disabled = false; occupyBtn.title = '点击占领'; occupyBtn.style.opacity = '1'; } } if (rescueBtn) { if (occupier === currentUser) rescueBtn.disabled = true; else if (occupier) rescueBtn.disabled = false; else rescueBtn.disabled = true; } if (robBtn) { if (occupier && occupier !== currentUser) { robBtn.disabled = false; robBtn.onclick = () => { closeModal(robBtn); robOccupied(friendName); }; } else { robBtn.disabled = true; } } }
 function privateChat(friendName) { let chatInput = document.getElementById('chatInput'); if (chatInput) { chatInput.value = `@${friendName} `; chatInput.focus(); } let modal = document.querySelector('.modal'); if (modal) modal.remove(); addLog(`💬 开始与 ${friendName} 私聊，输入消息后发送（会自动提醒对方）`); }
@@ -1404,9 +1418,40 @@ async function loadBlacklist() { let r = await fetch(`/api/blacklist?username=${
 async function removeFromBlacklist(name) { let r = await fetch('/api/blacklist/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, target: name }) }); let d = await r.json(); if (d.success) { addLog(`已将 ${name} 移出黑名单`); await loadBlacklist(); await loadFriendList(); } else alert(d.msg); }
 
 // ========== 头像 ==========
-async function showAvatarModal() { let r = await fetch('/avatar_list?t=' + Date.now()); let d = await r.json(); let cont = document.getElementById('avatarList'); cont.innerHTML = ''; for (let av of d.avatars) { let div = document.createElement('div'); div.className = 'recruit-card'; div.innerHTML = `<img src="/static/images/avatars/${av}" style="width:60px;" onerror="this.parentElement.remove()"><div>${av}</div>`; div.onclick = () => selectAvatar(av); cont.appendChild(div); } document.getElementById('avatarModal').style.display = 'flex'; }
-async function selectAvatar(avatar) { let r = await fetch('/update_avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, avatar: avatar }) }); let d = await r.json(); if (d.success) { document.getElementById('userAvatar').src = `/static/images/avatars/${avatar}`; closeAvatarModal(); setSelfInfo(); addLog("👤 头像已更换"); } }
-function closeAvatarModal() { document.getElementById('avatarModal').style.display = 'none'; }
+async function showAvatarModal() {
+    let r = await fetch('/avatar_list?t=' + Date.now());
+    let d = await r.json();
+    let cont = document.getElementById('avatarList');
+    cont.innerHTML = '';
+    for (let av of d.avatars) {
+        let div = document.createElement('div');
+        div.className = 'avatar-item';
+        div.style.cssText = 'cursor:pointer; margin:5px; display:inline-block; text-align:center;';
+        div.innerHTML = `<img src="https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${av}" style="width:60px; height:60px; border-radius:50%; border:2px solid gold; object-fit:cover;" onerror="this.src='https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/hero.png'">`;
+        div.onclick = () => selectAvatar(av);
+        cont.appendChild(div);
+    }
+    document.getElementById('avatarModal').style.display = 'flex';
+}
+
+async function selectAvatar(avatar) {
+    let r = await fetch('/update_avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser, avatar: avatar })
+    });
+    let d = await r.json();
+    if (d.success) {
+        document.getElementById('userAvatar').src = `https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/images/avatars/${avatar}`;
+        closeAvatarModal();
+        setSelfInfo();
+        addLog("👤 头像已更换");
+    }
+}
+
+function closeAvatarModal() {
+    document.getElementById('avatarModal').style.display = 'none';
+}
 
 // ========== 天骄榜 ==========
 function showPowerRank() {
@@ -1473,10 +1518,10 @@ async function rejectFriendRequest(fromUser) {
 // ========== 音乐系统 ==========
 let bgMusic = null, battleMusic = null, winSound = null, loseSound = null, currentMusic = null, isFightingMusic = false;
 function initMusic() {
-    bgMusic = new Audio('/static/music/bg01.mp3'); bgMusic.loop = true; bgMusic.volume = 0.7;
-    battleMusic = new Audio('/static/music/battle.mp3'); battleMusic.loop = true; battleMusic.volume = 0.7;
-    winSound = new Audio('/static/music/fightwin.mp3'); winSound.loop = false; winSound.volume = 0.7;
-    loseSound = new Audio('/static/music/fightlose.mp3'); loseSound.loop = false; loseSound.volume = 0.7;
+    bgMusic = new Audio('https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/music/bg01.mp3'); bgMusic.loop = true; bgMusic.volume = 0.7;
+    battleMusic = new Audio('https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/music/battle.mp3'); battleMusic.loop = true; battleMusic.volume = 0.7;
+    winSound = new Audio('https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/music/fightwin.mp3'); winSound.loop = false; winSound.volume = 0.7;
+    loseSound = new Audio('https://cdn.jsdelivr.net/gh/jiejiaogame/jiejiao/static/music/fightlose.mp3'); loseSound.loop = false; loseSound.volume = 0.7;
     window.playBgMusic = playBgMusic; window.playBattleMusic = playBattleMusic; window.playWinSound = playWinSound; window.playLoseSound = playLoseSound;
 }
 function playBgMusic() { if (currentMusic === bgMusic) return; stopAllMusic(); bgMusic.currentTime = 0; bgMusic.play().catch(e=>console.log); currentMusic = bgMusic; isFightingMusic = false; }
